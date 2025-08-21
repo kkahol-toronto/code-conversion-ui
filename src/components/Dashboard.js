@@ -8,86 +8,35 @@ import { Search, Mic, Send, ChevronRight, Filter, Users, Palette, Sun, Eye, Bell
 import { useNavigate } from "react-router-dom";
 import ProjectDetails from "./ProjectDetails";
 import NotificationsPage from "./NotificationsPage";
+import { useTheme } from "../context/ThemeContext";
 
 // Import images from the assets folder
 import fordLogo from "../assets/ford-logo.png";
 import heroImage from "../assets/front_image.png";
 
-// ---------------------------- Theme Definitions -----------------------------
-const themes = {
-  professional: {
-    name: "Professional",
-    icon: <Palette className="h-4 w-4" />,
-    colors: {
-      primary: "from-sky-50 via-white to-indigo-50",
-      card: "bg-white/90 backdrop-blur",
-      border: "border-slate-200",
-      text: "text-slate-900",
-      textSecondary: "text-slate-600",
-      textMuted: "text-slate-500",
-      accent: "bg-blue-600",
-      accentHover: "hover:bg-blue-700",
-      progress: "from-blue-400 to-indigo-600",
-      header: "bg-white/80 backdrop-blur-xl",
-      chart: "bg-white",
-      tooltip: "bg-slate-900 text-white"
-    },
-    fonts: {
-      base: "text-base",
-      heading: "text-3xl md:text-4xl",
-      kpi: "text-3xl",
-      table: "text-sm"
-    }
-  },
-  vibrant: {
-    name: "Vibrant",
-    icon: <Sun className="h-4 w-4" />,
-    colors: {
-      primary: "from-blue-600 via-blue-800 to-yellow-600",
-      card: "bg-gradient-to-br from-blue-900/80 via-blue-800/80 to-yellow-600/70 backdrop-blur border-2",
-      border: "border-blue-300",
-      text: "text-white",
-      textSecondary: "text-gray-100",
-      textMuted: "text-gray-200",
-      accent: "bg-gradient-to-r from-blue-700 via-blue-800 to-yellow-600",
-      accentHover: "hover:from-blue-800 hover:via-blue-900 hover:to-yellow-700",
-      progress: "from-blue-600 via-blue-800 to-yellow-600",
-      header: "bg-gradient-to-r from-blue-900/80 via-blue-800/80 to-yellow-600/80 backdrop-blur-xl border-blue-300",
-      chart: "bg-gradient-to-br from-blue-900/70 via-blue-800/70 to-yellow-600/60",
-      tooltip: "bg-gradient-to-r from-blue-900 to-blue-800 text-white"
-    },
-    fonts: {
-      base: "text-base",
-      heading: "text-3xl md:text-4xl",
-      kpi: "text-3xl",
-      table: "text-sm"
-    }
-  },
-  readable: {
-    name: "Readable",
-    icon: <Eye className="h-4 w-4" />,
-    colors: {
-      primary: "from-gray-50 via-white to-gray-100",
-      card: "bg-white",
-      border: "border-gray-300",
-      text: "text-gray-900",
-      textSecondary: "text-gray-700",
-      textMuted: "text-gray-500",
-      accent: "bg-gray-800",
-      accentHover: "hover:bg-gray-900",
-      progress: "from-gray-600 to-gray-800",
-      header: "bg-white border-gray-300",
-      chart: "bg-white",
-      tooltip: "bg-gray-900 text-white"
-    },
-    fonts: {
-      base: "text-lg",
-      heading: "text-4xl md:text-5xl",
-      kpi: "text-4xl",
-      table: "text-base"
-    }
-  }
-};
+// Theme selector component
+function ThemeSelector({ currentTheme, onThemeChange }) {
+  const { themes } = useTheme();
+  
+  return (
+    <div className="flex items-center gap-2">
+      {Object.entries(themes).map(([key, themeConfig]) => (
+        <button
+          key={key}
+          onClick={() => onThemeChange(key)}
+          className={`p-2 rounded-xl transition-all duration-200 ${
+            currentTheme === key
+              ? "bg-blue-100 text-blue-700 border-2 border-blue-300"
+              : "hover:bg-slate-100 text-slate-600"
+          }`}
+          title={themeConfig.name}
+        >
+          <span className="text-lg">{themeConfig.icon}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 // ---------------------------- Mock Data -----------------------------
 const kpis = {
@@ -260,33 +209,14 @@ function RiskBadge({ risk, theme }) {
   return <span className={`px-2.5 py-1 text-xs rounded-full border ${palette[risk] || palette.low}`}>{risk}</span>;
 }
 
-function ThemeSelector({ currentTheme, onThemeChange }) {
-  return (
-    <div className="flex items-center gap-2">
-      {Object.entries(themes).map(([key, theme]) => (
-        <button
-          key={key}
-          onClick={() => onThemeChange(key)}
-          className={`p-2 rounded-xl transition-all duration-200 ${
-            currentTheme === key
-              ? "bg-blue-100 text-blue-700 border-2 border-blue-300"
-              : "hover:bg-slate-100 text-slate-600"
-          }`}
-          title={theme.name}
-        >
-          {theme.icon}
-        </button>
-      ))}
-    </div>
-  );
-}
+
 
 // ----------------------------- Main Dashboard ------------------------------
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { currentTheme, changeTheme, theme: themeConfig } = useTheme();
   const [q, setQ] = useState("");
   const [messages, setMessages] = useState([]);
-  const [currentTheme, setCurrentTheme] = useState("professional");
   const [isChatExpanded, setIsChatExpanded] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isProjectDetailsOpen, setIsProjectDetailsOpen] = useState(false);
@@ -334,7 +264,7 @@ export default function Dashboard() {
   const [logoSrc, setLogoSrc] = useState(fordLogo);
   const [heroSrc, setHeroSrc] = useState(heroImage);
 
-  const theme = themes[currentTheme];
+  const theme = themeConfig;
 
   return (
     <div className={`min-h-screen bg-gradient-to-br ${theme.colors.primary} ${theme.colors.text}`}>
@@ -349,7 +279,7 @@ export default function Dashboard() {
           />
           <div className={`text-xl font-bold ${theme.colors.text}`}>Ford Falcon</div>
           <div className="ml-auto flex items-center gap-3">
-            <ThemeSelector currentTheme={currentTheme} onThemeChange={setCurrentTheme} />
+            <ThemeSelector currentTheme={currentTheme} onThemeChange={changeTheme} />
             <button
               onClick={() => setShowNotifications(true)}
               className="relative p-2 rounded-xl hover:bg-slate-100 transition-colors"

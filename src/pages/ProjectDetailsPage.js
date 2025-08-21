@@ -7,82 +7,31 @@ import ConfirmationPage from '../components/ConfirmationPage';
 import SessionDetails from '../components/SessionDetails';
 import NotificationsPage from '../components/NotificationsPage';
 import DocumentChat from '../components/DocumentChat';
+import { useTheme } from '../context/ThemeContext';
 
-// Theme definitions
-const themes = {
-  professional: {
-    name: "Professional",
-    icon: <Palette className="h-4 w-4" />,
-    colors: {
-      primary: "from-sky-50 via-white to-indigo-50",
-      card: "bg-white/90 backdrop-blur",
-      border: "border-slate-200",
-      text: "text-slate-900",
-      textSecondary: "text-slate-600",
-      textMuted: "text-slate-500",
-      accent: "bg-blue-600",
-      accentHover: "hover:bg-blue-700",
-      progress: "from-blue-400 to-indigo-600",
-      header: "bg-white/80 backdrop-blur-xl",
-      chart: "bg-white",
-      tooltip: "bg-slate-900 text-white"
-    },
-    fonts: {
-      base: "text-base",
-      heading: "text-3xl md:text-4xl",
-      kpi: "text-3xl",
-      table: "text-sm"
-    }
-  },
-  vibrant: {
-    name: "Vibrant",
-    icon: <Sun className="h-4 w-4" />,
-    colors: {
-      primary: "from-blue-600 via-blue-800 to-yellow-600",
-      card: "bg-gradient-to-br from-blue-900/80 via-blue-800/80 to-yellow-600/70 backdrop-blur border-2",
-      border: "border-blue-300",
-      text: "text-white",
-      textSecondary: "text-gray-100",
-      textMuted: "text-gray-200",
-      accent: "bg-gradient-to-r from-blue-700 via-blue-800 to-yellow-600",
-      accentHover: "hover:from-blue-800 hover:via-blue-900 hover:to-yellow-700",
-      progress: "from-blue-600 via-blue-800 to-yellow-600",
-      header: "bg-gradient-to-r from-blue-900/80 via-blue-800/80 to-yellow-600/80 backdrop-blur-xl border-blue-300",
-      chart: "bg-gradient-to-br from-blue-900/70 via-blue-800/70 to-yellow-600/60",
-      tooltip: "bg-gradient-to-r from-blue-900 to-blue-800 text-white"
-    },
-    fonts: {
-      base: "text-base",
-      heading: "text-3xl md:text-4xl",
-      kpi: "text-3xl",
-      table: "text-sm"
-    }
-  },
-  readable: {
-    name: "Readable",
-    icon: <EyeIcon className="h-4 w-4" />,
-    colors: {
-      primary: "from-gray-50 via-white to-gray-100",
-      card: "bg-white",
-      border: "border-gray-300",
-      text: "text-gray-900",
-      textSecondary: "text-gray-700",
-      textMuted: "text-gray-500",
-      accent: "bg-gray-800",
-      accentHover: "hover:bg-gray-900",
-      progress: "from-gray-600 to-gray-800",
-      header: "bg-white border-gray-300",
-      chart: "bg-white",
-      tooltip: "bg-gray-900 text-white"
-    },
-    fonts: {
-      base: "text-lg",
-      heading: "text-4xl md:text-5xl",
-      kpi: "text-4xl",
-      table: "text-base"
-    }
-  }
-};
+// Theme selector component
+function ThemeSelector({ currentTheme, onThemeChange }) {
+  const { themes } = useTheme();
+  
+  return (
+    <div className="flex items-center gap-2">
+      {Object.entries(themes).map(([key, themeConfig]) => (
+        <button
+          key={key}
+          onClick={() => onThemeChange(key)}
+          className={`p-2 rounded-xl transition-all duration-200 ${
+            currentTheme === key
+              ? "bg-blue-100 text-blue-700 border-2 border-blue-300"
+              : "hover:bg-slate-100 text-slate-600"
+          }`}
+          title={themeConfig.name}
+        >
+          <span className="text-lg">{themeConfig.icon}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 // Mock data - in real app this would come from API
 const PROJECTS = [
@@ -483,29 +432,7 @@ const PROJECT_STAGES = {
   }
 };
 
-function ThemeSelector({ currentTheme, onThemeChange }) {
-  const currentThemeObj = themes[currentTheme];
-  return (
-    <div className="flex items-center gap-2">
-      {Object.entries(themes).map(([key, theme]) => (
-        <button
-          key={key}
-          onClick={() => onThemeChange(key)}
-          className={`p-2 rounded-xl transition-all duration-200 ${
-            currentTheme === key
-              ? "bg-blue-100 text-blue-700 border-2 border-blue-300"
-              : currentThemeObj?.name === "Vibrant" 
-                ? "hover:bg-white/20 text-white"
-                : "hover:bg-slate-100 text-slate-600"
-          }`}
-          title={theme.name}
-        >
-          {theme.icon}
-        </button>
-      ))}
-    </div>
-  );
-}
+
 
 const PIPELINE = [
   "Data Ingestion",
@@ -523,8 +450,8 @@ const PIPELINE = [
 export default function ProjectDetailsPage() {
   const { projectName } = useParams();
   const navigate = useNavigate();
+  const { currentTheme, changeTheme, theme: themeConfig } = useTheme();
   const [selectedStage, setSelectedStage] = useState(null);
-  const [currentTheme, setCurrentTheme] = useState("professional");
   const [q, setQ] = useState("");
   const [messages, setMessages] = useState([]);
   const [isChatExpanded, setIsChatExpanded] = useState(false);
@@ -725,7 +652,7 @@ export default function ProjectDetailsPage() {
     }
   };
 
-  const theme = themes[currentTheme];
+  const theme = themeConfig;
   const projectData = PROJECT_DATA[projectName] || PROJECT_DATA.MISC;
 
   const handleAsk = () => {
@@ -916,7 +843,7 @@ export default function ProjectDetailsPage() {
           </button>
           <div className={`text-xl font-bold ${theme.colors.text}`}>Ford Falcon</div>
           <div className="ml-auto flex items-center gap-3">
-            <ThemeSelector currentTheme={currentTheme} onThemeChange={setCurrentTheme} />
+            <ThemeSelector currentTheme={currentTheme} onThemeChange={changeTheme} />
             <button
               onClick={() => {
                 setIsGlobalNotifications(true);
