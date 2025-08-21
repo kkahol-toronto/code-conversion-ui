@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, FileText, Code, Users, Clock, CheckCircle, Play, Upload, Eye, Edit, Calendar, Palette, Sun, Eye as EyeIcon, Search, Mic, Send, ChevronRight, Zap, Bell, Settings, Play as AutoPlay, Hand } from 'lucide-react';
-import { Area, AreaChart, CartesianGrid, Legend, Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip, XAxis, YAxis, BarChart, Bar, Cell, LineChart, Line, ReferenceLine } from "recharts";
+import { ArrowLeft, FileText, Code, Users, Clock, CheckCircle, Play, Upload, Eye, Edit, Palette, Sun, Eye as EyeIcon, Mic, Send, ChevronRight, Zap, Bell, Play as AutoPlay, Hand } from 'lucide-react';
+import { Area, AreaChart, CartesianGrid, Legend, Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip, XAxis, YAxis, LineChart, Line, ReferenceLine } from "recharts";
 import ConfirmationPage from '../components/ConfirmationPage';
 import SessionDetails from '../components/SessionDetails';
 import NotificationsPage from '../components/NotificationsPage';
+import DocumentChat from '../components/DocumentChat';
 
 // Theme definitions
 const themes = {
@@ -545,6 +546,8 @@ export default function ProjectDetailsPage() {
   const [notifications, setNotifications] = useState([]);
   const [currentStageProgress, setCurrentStageProgress] = useState(0);
   const [stageTimer, setStageTimer] = useState(null);
+  const [showDocumentChat, setShowDocumentChat] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState(null);
   const { transcript, setTranscript, start } = useSpeechRecognition(true);
   const audioRef = useRef(null);
 
@@ -693,7 +696,6 @@ export default function ProjectDetailsPage() {
   const startStageTimer = (stageIndex) => {
     if (stageTimer) clearInterval(stageTimer);
     
-    const stage = PROJECT_STAGES[Object.keys(PROJECT_STAGES)[stageIndex - 1]];
     // Use shorter duration for demo purposes (30 seconds per stage)
     const duration = 30 * 1000; // 30 seconds
     
@@ -1430,6 +1432,15 @@ export default function ProjectDetailsPage() {
                           <button className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-green-600/30 text-green-300" : "bg-green-100 text-green-800"}`}>
                             View Evaluation
                           </button>
+                          <button 
+                            onClick={() => {
+                              setSelectedDocument(doc);
+                              setShowDocumentChat(true);
+                            }}
+                            className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-purple-600/30 text-purple-300" : "bg-purple-100 text-purple-800"}`}
+                          >
+                            Query & Edit
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -1453,6 +1464,15 @@ export default function ProjectDetailsPage() {
                       <button className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-green-600/30 text-green-300" : "bg-green-100 text-green-800"}`}>
                         View Evaluation
                       </button>
+                      <button 
+                        onClick={() => {
+                          setSelectedDocument(currentArtifacts.capabilityDocument[0]);
+                          setShowDocumentChat(true);
+                        }}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-purple-600/30 text-purple-300" : "bg-purple-100 text-purple-800"}`}
+                      >
+                        Query & Edit
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1473,6 +1493,15 @@ export default function ProjectDetailsPage() {
                       </button>
                       <button className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-green-600/30 text-green-300" : "bg-green-100 text-green-800"}`}>
                         View Evaluation
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setSelectedDocument(currentArtifacts.applicationDocument[0]);
+                          setShowDocumentChat(true);
+                        }}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-purple-600/30 text-purple-300" : "bg-purple-100 text-purple-800"}`}
+                      >
+                        Query & Edit
                       </button>
                     </div>
                   </div>
@@ -1496,6 +1525,15 @@ export default function ProjectDetailsPage() {
                           </button>
                           <button className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-green-600/30 text-green-300" : "bg-green-100 text-green-800"}`}>
                             View Evaluation
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setSelectedDocument(doc);
+                              setShowDocumentChat(true);
+                            }}
+                            className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-purple-600/30 text-purple-300" : "bg-purple-100 text-purple-800"}`}
+                          >
+                            Query & Edit
                           </button>
                         </div>
                       </div>
@@ -1564,8 +1602,7 @@ export default function ProjectDetailsPage() {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Object.entries(PROJECT_STAGES).map(([key, stage], index) => {
                 const status = getStageStatus(index + 1);
-                const isLastInRow = (index + 1) % 3 === 0;
-                const isLastRow = index >= Object.keys(PROJECT_STAGES).length - 3;
+
                 
                 return (
                   <React.Fragment key={key}>
@@ -2061,6 +2098,16 @@ export default function ProjectDetailsPage() {
           projectName={projectName}
           isGlobal={isGlobalNotifications}
           onClose={() => setShowNotifications(false)}
+          theme={theme}
+        />
+      )}
+
+      {/* Document Chat Overlay */}
+      {showDocumentChat && (
+        <DocumentChat
+          document={selectedDocument}
+          isOpen={showDocumentChat}
+          onClose={() => setShowDocumentChat(false)}
           theme={theme}
         />
       )}
