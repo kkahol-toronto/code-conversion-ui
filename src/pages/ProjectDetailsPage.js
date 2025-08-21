@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, FileText, Code, Users, Clock, CheckCircle, Play, Upload, Eye, Edit, Calendar, Palette, Sun, Eye as EyeIcon, Search, Mic, Send, ChevronRight, Zap } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, Legend, Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip, XAxis, YAxis, BarChart, Bar, Cell } from "recharts";
 import ConfirmationPage from '../components/ConfirmationPage';
+import SessionDetails from '../components/SessionDetails';
 
 // Theme definitions
 const themes = {
@@ -445,6 +446,7 @@ const PROJECT_STAGES = {
 };
 
 function ThemeSelector({ currentTheme, onThemeChange }) {
+  const currentThemeObj = themes[currentTheme];
   return (
     <div className="flex items-center gap-2">
       {Object.entries(themes).map(([key, theme]) => (
@@ -454,7 +456,9 @@ function ThemeSelector({ currentTheme, onThemeChange }) {
           className={`p-2 rounded-xl transition-all duration-200 ${
             currentTheme === key
               ? "bg-blue-100 text-blue-700 border-2 border-blue-300"
-              : "hover:bg-slate-100 text-slate-600"
+              : currentThemeObj?.name === "Vibrant" 
+                ? "hover:bg-white/20 text-white"
+                : "hover:bg-slate-100 text-slate-600"
           }`}
           title={theme.name}
         >
@@ -496,6 +500,8 @@ export default function ProjectDetailsPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [newDocument, setNewDocument] = useState({ name: "", description: "", type: "other" });
   const [showAddDocumentForm, setShowAddDocumentForm] = useState(false);
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [showSessionDetails, setShowSessionDetails] = useState(false);
   const { transcript, setTranscript, start } = useSpeechRecognition(true);
   const audioRef = useRef(null);
 
@@ -614,9 +620,9 @@ export default function ProjectDetailsPage() {
     setTranscript("");
   };
 
-  const handleViewArtifacts = (sessionId) => {
-    // Navigate to artifacts page for this session
-    navigate(`/project/${projectName}/artifacts/${sessionId}`);
+  const handleViewSessionDetails = (session) => {
+    setSelectedSession(session);
+    setShowSessionDetails(true);
   };
 
   const handleAddDocument = () => {
@@ -881,7 +887,7 @@ export default function ProjectDetailsPage() {
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
                 activeTab === "overview"
                   ? `${theme.name === "Vibrant" ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-gray-900 shadow-sm'}`
-                  : `${theme.colors.textMuted} hover:text-gray-900`
+                  : `${theme.name === "Vibrant" ? 'text-gray-600 hover:text-blue-300' : theme.colors.textMuted + ' hover:text-gray-900'}`
               }`}
             >
               Overview
@@ -891,7 +897,7 @@ export default function ProjectDetailsPage() {
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
                 activeTab === "artifacts"
                   ? `${theme.name === "Vibrant" ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-gray-900 shadow-sm'}`
-                  : `${theme.colors.textMuted} hover:text-gray-900`
+                  : `${theme.name === "Vibrant" ? 'text-gray-600 hover:text-blue-300' : theme.colors.textMuted + ' hover:text-gray-900'}`
               }`}
             >
               Artifacts
@@ -1588,7 +1594,11 @@ export default function ProjectDetailsPage() {
                   
                   {/* Historical Sessions */}
                   {sessionHistory.map((session, index) => (
-                    <tr key={session.id} className={`border-t ${theme.name === "Vibrant" ? 'border-white/20' : 'border-slate-100'}`}>
+                    <tr 
+                      key={session.id} 
+                      className={`border-t ${theme.name === "Vibrant" ? 'border-white/20' : 'border-slate-100'} hover:bg-slate-50 cursor-pointer transition-colors`}
+                      onClick={() => handleViewSessionDetails(session)}
+                    >
                       <td className={`px-4 py-2 font-medium ${theme.colors.text}`}>
                         {session.id.slice(-8)}...
                       </td>
@@ -1609,14 +1619,9 @@ export default function ProjectDetailsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-2">
-                        <button
-                          onClick={() => handleViewArtifacts(session.id)}
-                          className={`text-xs font-medium hover:underline ${
-                            theme.name === "Vibrant" ? 'text-blue-300 hover:text-blue-200' : 'text-blue-600 hover:text-blue-800'
-                          }`}
-                        >
-                          View Artifacts
-                        </button>
+                        <span className={`text-xs ${theme.colors.textMuted}`}>
+                          Click to view details
+                        </span>
                       </td>
                     </tr>
                   ))}
@@ -1680,6 +1685,20 @@ export default function ProjectDetailsPage() {
           inputDocuments={inputDocuments}
           onConfirm={handleConfirmationConfirm}
           onCancel={handleConfirmationCancel}
+          theme={theme}
+        />
+      )}
+
+      {/* Session Details Overlay */}
+      {showSessionDetails && selectedSession && (
+        <SessionDetails
+          session={selectedSession}
+          project={project}
+          isOpen={showSessionDetails}
+          onClose={() => {
+            setShowSessionDetails(false);
+            setSelectedSession(null);
+          }}
           theme={theme}
         />
       )}
