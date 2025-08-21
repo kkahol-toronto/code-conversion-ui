@@ -491,8 +491,69 @@ export default function ProjectDetailsPage() {
   const [currentStatusMessage, setCurrentStatusMessage] = useState("");
   const [sessionHistory, setSessionHistory] = useState(SAMPLE_SESSION_HISTORY[projectName] || []);
   const [currentSessionId, setCurrentSessionId] = useState(null);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [newDocument, setNewDocument] = useState({ name: "", description: "", type: "other" });
+  const [showAddDocumentForm, setShowAddDocumentForm] = useState(false);
   const { transcript, setTranscript, start } = useSpeechRecognition(true);
   const audioRef = useRef(null);
+
+  // Artifacts data for current project
+  const projectArtifacts = {
+    MISC: {
+      inputDocuments: [
+        { name: "COBOL_Source_Files.zip", type: "codebase", description: "Complete COBOL source code files", version: "v1.2", date: "2024-01-15" },
+        { name: "User_Manual_MISC.pdf", type: "user_manual", description: "Comprehensive user manual for MISC system", version: "v2.1", date: "2024-01-14" },
+        { name: "Meeting_Recording_Phase1.mp3", type: "meeting_recording", description: "SME discussion on business requirements", version: "v1.0", date: "2024-01-13" },
+        { name: "FSA_Documentation.pdf", type: "fsa", description: "Functional Specification Analysis document", version: "v1.5", date: "2024-01-12" },
+        { name: "Business_Requirements.docx", type: "other", description: "Additional business requirements document", version: "v1.0", date: "2024-01-11" }
+      ],
+      comprehensionDocuments: [
+        { name: "MISC_File1_Comprehension.pdf", description: "Comprehension analysis for MISC_MAIN.cbl", evaluation: "MISC_File1_Evaluation.pdf" },
+        { name: "MISC_File2_Comprehension.pdf", description: "Comprehension analysis for MISC_PROCESS.cbl", evaluation: "MISC_File2_Evaluation.pdf" },
+        { name: "MISC_File3_Comprehension.pdf", description: "Comprehension analysis for MISC_UTILS.cbl", evaluation: "MISC_File3_Evaluation.pdf" }
+      ],
+      capabilityDocument: [
+        { name: "MISC_Capability_Analysis.pdf", description: "Comprehensive capability analysis document", evaluation: "MISC_Capability_Evaluation.pdf" }
+      ],
+      applicationDocument: [
+        { name: "MISC_Application_Overview.pdf", description: "Complete application-level documentation", evaluation: "MISC_Application_Evaluation.pdf" }
+      ],
+      codeConversionDocuments: [
+        { name: "MISC_TTD_Documents.zip", description: "Technical Transfer Documents for code conversion", evaluation: "MISC_TTD_Evaluation.pdf" },
+        { name: "MISC_Conversion_Architecture.pdf", description: "Code conversion architecture specification", evaluation: "MISC_Architecture_Evaluation.pdf" },
+        { name: "MISC_Pseudo_Code.pdf", description: "Pseudo code documentation for conversion", evaluation: "MISC_Pseudo_Evaluation.pdf" },
+        { name: "MISC_Converted_Code.zip", description: "Complete converted Java codebase", evaluation: "MISC_Code_Evaluation.pdf" }
+      ]
+    },
+    GEVIS: {
+      inputDocuments: [
+        { name: "GEVIS_Codebase.zip", type: "codebase", description: "GEVIS COBOL source files", version: "v1.0", date: "2024-01-12" },
+        { name: "GEVIS_User_Guide.pdf", type: "user_manual", description: "GEVIS system user guide", version: "v1.1", date: "2024-01-11" },
+        { name: "GEVIS_Requirements.mp3", type: "meeting_recording", description: "GEVIS requirements discussion", version: "v1.0", date: "2024-01-10" }
+      ],
+      comprehensionDocuments: [
+        { name: "GEVIS_File1_Comprehension.pdf", description: "Comprehension analysis for GEVIS_MAIN.cbl", evaluation: "GEVIS_File1_Evaluation.pdf" },
+        { name: "GEVIS_File2_Comprehension.pdf", description: "Comprehension analysis for GEVIS_DATA.cbl", evaluation: "GEVIS_File2_Evaluation.pdf" }
+      ],
+      capabilityDocument: [
+        { name: "GEVIS_Capability_Analysis.pdf", description: "GEVIS capability analysis document", evaluation: "GEVIS_Capability_Evaluation.pdf" }
+      ],
+      applicationDocument: [
+        { name: "GEVIS_Application_Overview.pdf", description: "GEVIS application documentation", evaluation: "GEVIS_Application_Evaluation.pdf" }
+      ],
+      codeConversionDocuments: [
+        { name: "GEVIS_TTD_Documents.zip", description: "GEVIS technical transfer documents", evaluation: "GEVIS_TTD_Evaluation.pdf" },
+        { name: "GEVIS_Conversion_Architecture.pdf", description: "GEVIS conversion architecture", evaluation: "GEVIS_Architecture_Evaluation.pdf" },
+        { name: "GEVIS_Pseudo_Code.pdf", description: "GEVIS pseudo code documentation", evaluation: "GEVIS_Pseudo_Evaluation.pdf" },
+        { name: "GEVIS_Converted_Code.zip", description: "GEVIS converted Java code", evaluation: "GEVIS_Code_Evaluation.pdf" }
+      ]
+    }
+  };
+
+  const currentArtifacts = projectArtifacts[projectName] || projectArtifacts.MISC;
+
+  // Initialize input documents state
+  const [inputDocuments, setInputDocuments] = useState(currentArtifacts.inputDocuments);
 
   // React hooks must be called before any early returns
   useEffect(() => {
@@ -554,6 +615,24 @@ export default function ProjectDetailsPage() {
   const handleViewArtifacts = (sessionId) => {
     // Navigate to artifacts page for this session
     navigate(`/project/${projectName}/artifacts/${sessionId}`);
+  };
+
+  const handleAddDocument = () => {
+    if (newDocument.name.trim() && newDocument.description.trim()) {
+      const documentToAdd = {
+        ...newDocument,
+        version: "v1.0",
+        date: new Date().toISOString().split('T')[0]
+      };
+      setInputDocuments(prev => [...prev, documentToAdd]);
+      setNewDocument({ name: "", description: "", type: "other" });
+      setShowAddDocumentForm(false);
+    }
+  };
+
+  const handleCancelAddDocument = () => {
+    setNewDocument({ name: "", description: "", type: "other" });
+    setShowAddDocumentForm(false);
   };
 
   const statusMessages = [
@@ -755,14 +834,14 @@ export default function ProjectDetailsPage() {
       </section>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Project Overview */}
+                {/* Project Overview */}
         <div className="mb-8">
           <h2 className={`text-2xl font-bold ${theme.colors.text} mb-4`}>Project Overview</h2>
           <div className={`${theme.colors.card} rounded-2xl border ${theme.colors.border} p-6 shadow-sm`}>
             <p className={`${theme.colors.textSecondary} leading-relaxed mb-4`}>
-              {project.name} is a comprehensive legacy system modernization project that involves converting 
-              existing COBOL/JCL codebase to modern Java architecture. The project focuses on maintaining 
-              business logic while improving performance, maintainability, and integration capabilities. 
+              {project.name} is a comprehensive legacy system modernization project that involves converting
+              existing COBOL/JCL codebase to modern Java architecture. The project focuses on maintaining
+              business logic while improving performance, maintainability, and integration capabilities.
               Our AI-driven approach ensures accurate conversion while preserving all critical functionality.
             </p>
             <div className="grid md:grid-cols-3 gap-4 mt-6">
@@ -782,110 +861,374 @@ export default function ProjectDetailsPage() {
           </div>
         </div>
 
-        {/* Lines of Code and Evaluation Charts */}
-        <div className="mb-8">
-          <h2 className={`text-2xl font-bold ${theme.colors.text} mb-6`}>Project Metrics</h2>
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Lines of Code Chart */}
-            <div className={`${theme.colors.chart} rounded-2xl border ${theme.colors.border} p-4 shadow`}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`font-semibold ${theme.colors.text}`}>Lines of Code Processed</h3>
-                <span className={`text-xs ${theme.colors.textMuted}`}>weekly</span>
+        {/* Tab Navigation */}
+        <div className="mb-6">
+          <div className="flex space-x-1 bg-gray-100 rounded-xl p-1">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                activeTab === "overview"
+                  ? `${theme.name === "Vibrant" ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-gray-900 shadow-sm'}`
+                  : `${theme.colors.textMuted} hover:text-gray-900`
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab("artifacts")}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                activeTab === "artifacts"
+                  ? `${theme.name === "Vibrant" ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-gray-900 shadow-sm'}`
+                  : `${theme.colors.textMuted} hover:text-gray-900`
+              }`}
+            >
+              Artifacts
+            </button>
+          </div>
+        </div>
+
+                {/* Overview Tab Content */}
+        {activeTab === "overview" && (
+          <>
+            {/* Lines of Code and Evaluation Charts */}
+            <div className="mb-8">
+              <h2 className={`text-2xl font-bold ${theme.colors.text} mb-6`}>Project Metrics</h2>
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Lines of Code Chart */}
+                <div className={`${theme.colors.chart} rounded-2xl border ${theme.colors.border} p-4 shadow`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className={`font-semibold ${theme.colors.text}`}>Lines of Code Processed</h3>
+                    <span className={`text-xs ${theme.colors.textMuted}`}>weekly</span>
+                  </div>
+                  <div className="h-56">
+                    <ResponsiveContainer>
+                      <AreaChart data={projectData.weeklyLoC}>
+                        <defs>
+                          <linearGradient id="loc" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#2563eb" stopOpacity={0.35} />
+                            <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke={theme.name === "Vibrant" ? "#ffffff40" : "#e5e7eb"} />
+                        <XAxis
+                          dataKey="week"
+                          tick={{ fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }}
+                        />
+                        <YAxis tick={{ fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: theme.name === "Vibrant" ? "#1e3a8a" : "#ffffff",
+                            color: theme.name === "Vibrant" ? "#ffffff" : "#000000",
+                            border: theme.name === "Vibrant" ? "1px solid #3b82f6" : "1px solid #e5e7eb"
+                          }}
+                        />
+                        <Area type="monotone" dataKey="loc" stroke="#2563eb" fill="url(#loc)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className={`text-center mt-2 ${theme.colors.textMuted}`}>
+                    Total: {projectData.totalLoC.toLocaleString()} LoC
+                  </div>
+                </div>
+
+                {/* Code Evaluation Radar */}
+                <div className={`${theme.colors.chart} rounded-2xl border ${theme.colors.border} p-4 shadow`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className={`font-semibold ${theme.colors.text}`}>Code Evaluation (0–5)</h3>
+                    <span className={`text-xs ${theme.colors.textMuted}`}>quality metrics</span>
+                  </div>
+                  <div className="h-56">
+                    <ResponsiveContainer>
+                      <RadarChart data={projectData.evalScores}>
+                        <PolarGrid stroke={theme.name === "Vibrant" ? "#ffffff40" : "#e5e7eb"} />
+                        <PolarAngleAxis
+                          dataKey="metric"
+                          tick={{ fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280", fontSize: 10 }}
+                        />
+                        <Radar name="Current" dataKey="score" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.35} />
+                        <Radar name="Target" dataKey="target" stroke="#22c55e" fill="#22c55e" fillOpacity={0.15} />
+                        <Legend
+                          wrapperStyle={{ color: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: theme.name === "Vibrant" ? "#1e3a8a" : "#ffffff",
+                            color: theme.name === "Vibrant" ? "#ffffff" : "#000000",
+                            border: theme.name === "Vibrant" ? "1px solid #3b82f6" : "1px solid #e5e7eb"
+                          }}
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Document Evaluation Radar */}
+                <div className={`${theme.colors.chart} rounded-2xl border ${theme.colors.border} p-4 shadow`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className={`font-semibold ${theme.colors.text}`}>Document Evaluation (0–5)</h3>
+                    <span className={`text-xs ${theme.colors.textMuted}`}>documentation quality</span>
+                  </div>
+                  <div className="h-56">
+                    <ResponsiveContainer>
+                      <RadarChart data={projectData.documentEvalScores}>
+                        <PolarGrid stroke={theme.name === "Vibrant" ? "#ffffff40" : "#e5e7eb"} />
+                        <PolarAngleAxis
+                          dataKey="metric"
+                          tick={{ fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280", fontSize: 10 }}
+                        />
+                        <Radar name="Current" dataKey="score" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.35} />
+                        <Radar name="Target" dataKey="target" stroke="#22c55e" fill="#22c55e" fillOpacity={0.15} />
+                        <Legend
+                          wrapperStyle={{ color: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: theme.name === "Vibrant" ? "#1e3a8a" : "#ffffff",
+                            color: theme.name === "Vibrant" ? "#ffffff" : "#000000",
+                            border: theme.name === "Vibrant" ? "1px solid #3b82f6" : "1px solid #e5e7eb"
+                          }}
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
               </div>
-              <div className="h-56">
-                <ResponsiveContainer>
-                  <AreaChart data={projectData.weeklyLoC}>
-                    <defs>
-                      <linearGradient id="loc" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.35} />
-                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke={theme.name === "Vibrant" ? "#ffffff40" : "#e5e7eb"} />
-                    <XAxis 
-                      dataKey="week" 
-                      tick={{ fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }}
-                    />
-                    <YAxis tick={{ fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }} />
-                    <Tooltip 
-                      contentStyle={{
-                        backgroundColor: theme.name === "Vibrant" ? "#1e3a8a" : "#ffffff",
-                        color: theme.name === "Vibrant" ? "#ffffff" : "#000000",
-                        border: theme.name === "Vibrant" ? "1px solid #3b82f6" : "1px solid #e5e7eb"
-                      }}
-                    />
-                    <Area type="monotone" dataKey="loc" stroke="#2563eb" fill="url(#loc)" />
-                  </AreaChart>
-                </ResponsiveContainer>
+            </div>
+          </>
+        )}
+
+        {/* Artifacts Tab Content */}
+        {activeTab === "artifacts" && (
+          <div className="space-y-8">
+            {/* Input Documents Section */}
+            <div className={`${theme.colors.card} rounded-2xl border ${theme.colors.border} p-6 shadow-sm`}>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className={`text-xl font-bold ${theme.colors.text}`}>Input Documents</h3>
+                <button 
+                  onClick={() => setShowAddDocumentForm(true)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${theme.colors.accent} text-white ${theme.colors.accentHover} transition-colors`}
+                >
+                  + Add Document
+                </button>
               </div>
-              <div className={`text-center mt-2 ${theme.colors.textMuted}`}>
-                Total: {projectData.totalLoC.toLocaleString()} LoC
+
+              {/* Add Document Form */}
+              {showAddDocumentForm && (
+                <div className={`mb-6 p-4 rounded-xl border-2 border-dashed ${theme.colors.border} ${theme.name === "Vibrant" ? "bg-white/10" : "bg-gray-50"}`}>
+                  <h4 className={`font-semibold ${theme.colors.text} mb-4`}>Add New Document</h4>
+                  <div className="grid md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className={`block text-sm font-medium ${theme.colors.text} mb-2`}>
+                        Document Name
+                      </label>
+                      <input
+                        type="text"
+                        value={newDocument.name}
+                        onChange={(e) => setNewDocument(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Enter document name..."
+                        className={`w-full px-3 py-2 rounded-lg border ${theme.colors.border} focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.colors.text} ${theme.name === "Vibrant" ? "bg-white/20" : "bg-white"}`}
+                      />
+                    </div>
+                    <div>
+                      <label className={`block text-sm font-medium ${theme.colors.text} mb-2`}>
+                        Document Type
+                      </label>
+                      <select
+                        value={newDocument.type}
+                        onChange={(e) => setNewDocument(prev => ({ ...prev, type: e.target.value }))}
+                        className={`w-full px-3 py-2 rounded-lg border ${theme.colors.border} focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.colors.text} ${theme.name === "Vibrant" ? "bg-white/20" : "bg-white"}`}
+                      >
+                        <option value="codebase">Codebase</option>
+                        <option value="user_manual">User Manual</option>
+                        <option value="meeting_recording">Meeting Recording</option>
+                        <option value="fsa">FSA Document</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <label className={`block text-sm font-medium ${theme.colors.text} mb-2`}>
+                      Description
+                    </label>
+                    <textarea
+                      value={newDocument.description}
+                      onChange={(e) => setNewDocument(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Enter document description..."
+                      rows="3"
+                      className={`w-full px-3 py-2 rounded-lg border ${theme.colors.border} focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme.colors.text} ${theme.name === "Vibrant" ? "bg-white/20" : "bg-white"}`}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className={`block text-sm font-medium ${theme.colors.text} mb-2`}>
+                      Upload File
+                    </label>
+                    <div className={`border-2 border-dashed ${theme.colors.border} rounded-lg p-6 text-center ${theme.name === "Vibrant" ? "bg-white/10" : "bg-gray-50"}`}>
+                      <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <p className={`mt-2 text-sm ${theme.colors.textMuted}`}>
+                        <span className="font-medium">Click to upload</span> or drag and drop
+                      </p>
+                      <p className={`text-xs ${theme.colors.textMuted}`}>
+                        PDF, DOC, ZIP, MP3, or any file type
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-3">
+                    <button
+                      onClick={handleCancelAddDocument}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium border ${theme.colors.border} ${theme.colors.text} hover:bg-gray-100 transition-colors`}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleAddDocument}
+                      disabled={!newDocument.name.trim() || !newDocument.description.trim()}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium ${theme.colors.accent} text-white ${theme.colors.accentHover} transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      Add Document
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              <div className="grid gap-4">
+                {inputDocuments.map((doc, index) => (
+                  <div key={index} className={`p-4 rounded-xl border ${theme.colors.border} ${theme.name === "Vibrant" ? "bg-white/10" : "bg-gray-50"}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            doc.type === "codebase" ? (theme.name === "Vibrant" ? "bg-blue-600/30 text-blue-300" : "bg-blue-100 text-blue-800") :
+                            doc.type === "user_manual" ? (theme.name === "Vibrant" ? "bg-green-600/30 text-green-300" : "bg-green-100 text-green-800") :
+                            doc.type === "meeting_recording" ? (theme.name === "Vibrant" ? "bg-purple-600/30 text-purple-300" : "bg-purple-100 text-purple-800") :
+                            doc.type === "fsa" ? (theme.name === "Vibrant" ? "bg-orange-600/30 text-orange-300" : "bg-orange-100 text-orange-800") :
+                            (theme.name === "Vibrant" ? "bg-gray-600/30 text-gray-300" : "bg-gray-100 text-gray-800")
+                          }`}>
+                          {doc.type.replace('_', ' ').toUpperCase()}
+                        </span>
+                          <span className={`text-sm ${theme.colors.textMuted}`}>v{doc.version}</span>
+                        </div>
+                        <h4 className={`font-semibold ${theme.colors.text} mb-1`}>{doc.name}</h4>
+                        <p className={`text-sm ${theme.colors.textSecondary}`}>{doc.description}</p>
+                        <p className={`text-xs ${theme.colors.textMuted} mt-2`}>Uploaded: {doc.date}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button className={`p-2 rounded-lg ${theme.name === "Vibrant" ? "bg-white/20 hover:bg-white/30" : "bg-gray-100 hover:bg-gray-200"} transition-colors`}>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </button>
+                        <button className={`p-2 rounded-lg ${theme.name === "Vibrant" ? "bg-white/20 hover:bg-white/30" : "bg-gray-100 hover:bg-gray-200"} transition-colors`}>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Code Evaluation Radar */}
-            <div className={`${theme.colors.chart} rounded-2xl border ${theme.colors.border} p-4 shadow`}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`font-semibold ${theme.colors.text}`}>Code Evaluation (0–5)</h3>
-                <span className={`text-xs ${theme.colors.textMuted}`}>quality metrics</span>
+            {/* Output Documents Section */}
+            <div className={`${theme.colors.card} rounded-2xl border ${theme.colors.border} p-6 shadow-sm`}>
+              <h3 className={`text-xl font-bold ${theme.colors.text} mb-6`}>Output Documents & Artifacts</h3>
+              
+              {/* Comprehension Documents */}
+              <div className="mb-8">
+                <h4 className={`text-lg font-semibold ${theme.colors.text} mb-4`}>Comprehension Documents</h4>
+                <div className="grid gap-4">
+                  {currentArtifacts.comprehensionDocuments.map((doc, index) => (
+                    <div key={index} className={`p-4 rounded-xl border ${theme.colors.border} ${theme.name === "Vibrant" ? "bg-white/10" : "bg-gray-50"}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h5 className={`font-semibold ${theme.colors.text} mb-1`}>{doc.name}</h5>
+                          <p className={`text-sm ${theme.colors.textSecondary}`}>{doc.description}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-blue-600/30 text-blue-300" : "bg-blue-100 text-blue-800"}`}>
+                            Download
+                          </button>
+                          <button className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-green-600/30 text-green-300" : "bg-green-100 text-green-800"}`}>
+                            View Evaluation
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="h-56">
-                <ResponsiveContainer>
-                  <RadarChart data={projectData.evalScores}>
-                    <PolarGrid stroke={theme.name === "Vibrant" ? "#ffffff40" : "#e5e7eb"} />
-                    <PolarAngleAxis 
-                      dataKey="metric" 
-                      tick={{ fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280", fontSize: 10 }}
-                    />
-                    <Radar name="Current" dataKey="score" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.35} />
-                    <Radar name="Target" dataKey="target" stroke="#22c55e" fill="#22c55e" fillOpacity={0.15} />
-                    <Legend 
-                      wrapperStyle={{ color: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }}
-                    />
-                    <Tooltip 
-                      contentStyle={{
-                        backgroundColor: theme.name === "Vibrant" ? "#1e3a8a" : "#ffffff",
-                        color: theme.name === "Vibrant" ? "#ffffff" : "#000000",
-                        border: theme.name === "Vibrant" ? "1px solid #3b82f6" : "1px solid #e5e7eb"
-                      }}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
 
-            {/* Document Evaluation Radar */}
-            <div className={`${theme.colors.chart} rounded-2xl border ${theme.colors.border} p-4 shadow`}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`font-semibold ${theme.colors.text}`}>Document Evaluation (0–5)</h3>
-                <span className={`text-xs ${theme.colors.textMuted}`}>documentation quality</span>
+              {/* Capability Document */}
+              <div className="mb-8">
+                <h4 className={`text-lg font-semibold ${theme.colors.text} mb-4`}>Capability Document</h4>
+                <div className={`p-4 rounded-xl border ${theme.colors.border} ${theme.name === "Vibrant" ? "bg-white/10" : "bg-gray-50"}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h5 className={`font-semibold ${theme.colors.text} mb-1`}>{currentArtifacts.capabilityDocument[0].name}</h5>
+                      <p className={`text-sm ${theme.colors.textSecondary}`}>{currentArtifacts.capabilityDocument[0].description}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-blue-600/30 text-blue-300" : "bg-blue-100 text-blue-800"}`}>
+                        Download
+                      </button>
+                      <button className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-green-600/30 text-green-300" : "bg-green-100 text-green-800"}`}>
+                        View Evaluation
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="h-56">
-                <ResponsiveContainer>
-                  <RadarChart data={projectData.documentEvalScores}>
-                    <PolarGrid stroke={theme.name === "Vibrant" ? "#ffffff40" : "#e5e7eb"} />
-                    <PolarAngleAxis 
-                      dataKey="metric" 
-                      tick={{ fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280", fontSize: 10 }}
-                    />
-                    <Radar name="Current" dataKey="score" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.35} />
-                    <Radar name="Target" dataKey="target" stroke="#22c55e" fill="#22c55e" fillOpacity={0.15} />
-                    <Legend 
-                      wrapperStyle={{ color: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }}
-                    />
-                    <Tooltip 
-                      contentStyle={{
-                        backgroundColor: theme.name === "Vibrant" ? "#1e3a8a" : "#ffffff",
-                        color: theme.name === "Vibrant" ? "#ffffff" : "#000000",
-                        border: theme.name === "Vibrant" ? "1px solid #3b82f6" : "1px solid #e5e7eb"
-                      }}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
+
+              {/* Application Document */}
+              <div className="mb-8">
+                <h4 className={`text-lg font-semibold ${theme.colors.text} mb-4`}>Application Document</h4>
+                <div className={`p-4 rounded-xl border ${theme.colors.border} ${theme.name === "Vibrant" ? "bg-white/10" : "bg-gray-50"}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h5 className={`font-semibold ${theme.colors.text} mb-1`}>{currentArtifacts.applicationDocument[0].name}</h5>
+                      <p className={`text-sm ${theme.colors.textSecondary}`}>{currentArtifacts.applicationDocument[0].description}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-blue-600/30 text-blue-300" : "bg-blue-100 text-blue-800"}`}>
+                        Download
+                      </button>
+                      <button className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-green-600/30 text-green-300" : "bg-green-100 text-green-800"}`}>
+                        View Evaluation
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Code Conversion Documents */}
+              <div>
+                <h4 className={`text-lg font-semibold ${theme.colors.text} mb-4`}>Code Conversion Documents</h4>
+                <div className="grid gap-4">
+                  {currentArtifacts.codeConversionDocuments.map((doc, index) => (
+                    <div key={index} className={`p-4 rounded-xl border ${theme.colors.border} ${theme.name === "Vibrant" ? "bg-white/10" : "bg-gray-50"}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h5 className={`font-semibold ${theme.colors.text} mb-1`}>{doc.name}</h5>
+                          <p className={`text-sm ${theme.colors.textSecondary}`}>{doc.description}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-blue-600/30 text-blue-300" : "bg-blue-100 text-blue-800"}`}>
+                            Download
+                          </button>
+                          <button className={`px-3 py-1 rounded-lg text-xs font-medium ${theme.name === "Vibrant" ? "bg-green-600/30 text-green-300" : "bg-green-100 text-green-800"}`}>
+                            View Evaluation
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Timeline */}
         <div className="mb-8">
