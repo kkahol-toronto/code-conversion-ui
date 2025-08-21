@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, FileText, Code, Users, Clock, CheckCircle, Play, Upload, Eye, Edit, Calendar, Palette, Sun, Eye as EyeIcon, Search, Mic, Send, ChevronRight, Zap } from 'lucide-react';
+import { ArrowLeft, FileText, Code, Users, Clock, CheckCircle, Play, Upload, Eye, Edit, Calendar, Palette, Sun, Eye as EyeIcon, Search, Mic, Send, ChevronRight, Zap, Bell, Settings, Play as AutoPlay, Hand } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, Legend, Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip, XAxis, YAxis, BarChart, Bar, Cell, LineChart, Line, ReferenceLine } from "recharts";
 import ConfirmationPage from '../components/ConfirmationPage';
 import SessionDetails from '../components/SessionDetails';
+import NotificationsPage from '../components/NotificationsPage';
 
 // Theme definitions
 const themes = {
@@ -538,6 +539,12 @@ export default function ProjectDetailsPage() {
   const [showAddDocumentForm, setShowAddDocumentForm] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
   const [showSessionDetails, setShowSessionDetails] = useState(false);
+  const [isAutomationMode, setIsAutomationMode] = useState(true);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [isGlobalNotifications, setIsGlobalNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [currentStageProgress, setCurrentStageProgress] = useState(0);
+  const [stageTimer, setStageTimer] = useState(null);
   const { transcript, setTranscript, start } = useSpeechRecognition(true);
   const audioRef = useRef(null);
 
@@ -604,6 +611,15 @@ export default function ProjectDetailsPage() {
     if (transcript) setQ(transcript);
   }, [transcript]);
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (stageTimer) {
+        clearInterval(stageTimer);
+      }
+    };
+  }, [stageTimer]);
+
   // Find the project
   const project = PROJECTS.find(p => p.name === projectName);
   
@@ -641,6 +657,70 @@ export default function ProjectDetailsPage() {
     if (stageIndex < project.progress) return 'completed';
     if (stageIndex === project.progress) return 'active';
     return 'pending';
+  };
+
+  // Add notification function
+  const addNotification = (type, title, message, project = projectName) => {
+    const newNotification = {
+      id: Date.now(),
+      type,
+      title,
+      message,
+      timestamp: new Date().toISOString(),
+      read: false,
+      project
+    };
+    setNotifications(prev => [newNotification, ...prev]);
+  };
+
+  // Handle stage completion
+  const handleStageComplete = (stageIndex) => {
+    const stageName = PROJECT_STAGES[Object.keys(PROJECT_STAGES)[stageIndex - 1]].name;
+    addNotification('success', `Stage ${stageIndex} Completed`, `${stageName} stage completed successfully.`);
+    
+    if (stageIndex < Object.keys(PROJECT_STAGES).length) {
+      project.progress = stageIndex + 1;
+      addNotification('info', `Stage ${stageIndex + 1} Started`, `${PROJECT_STAGES[Object.keys(PROJECT_STAGES)[stageIndex]].name} stage has begun.`);
+      
+      if (isAutomationMode) {
+        // Start automation timer for next stage
+        startStageTimer(stageIndex + 1);
+      }
+    }
+  };
+
+  // Start stage timer for automation
+  const startStageTimer = (stageIndex) => {
+    if (stageTimer) clearInterval(stageTimer);
+    
+    const stage = PROJECT_STAGES[Object.keys(PROJECT_STAGES)[stageIndex - 1]];
+    // Use shorter duration for demo purposes (30 seconds per stage)
+    const duration = 30 * 1000; // 30 seconds
+    
+    const startTime = Date.now();
+    setCurrentStageProgress(0);
+    
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min((elapsed / duration) * 100, 100);
+      setCurrentStageProgress(progress);
+      
+      if (progress >= 100) {
+        clearInterval(timer);
+        handleStageComplete(stageIndex);
+      }
+    }, 1000);
+    
+    setStageTimer(timer);
+  };
+
+  // Handle manual stage start
+  const handleManualStageStart = (stageIndex) => {
+    if (stageIndex === project.progress && enginesStarted) {
+      const stageName = PROJECT_STAGES[Object.keys(PROJECT_STAGES)[stageIndex - 1]].name;
+      addNotification('info', `Stage ${stageIndex} Started`, `${stageName} stage initiated manually.`);
+      startStageTimer(stageIndex);
+    }
   };
 
   const theme = themes[currentTheme];
@@ -684,6 +764,12 @@ export default function ProjectDetailsPage() {
     setEnginesStarted(true);
     // Update project stage to 2 (Comprehension Documentation)
     project.progress = 2;
+    addNotification('success', 'Engines Started', 'AI processing engines have been successfully started.');
+    
+    if (isAutomationMode) {
+      // Start automation for stage 2
+      startStageTimer(2);
+    }
   };
 
   const handleConfirmationCancel = () => {
@@ -829,6 +915,21 @@ export default function ProjectDetailsPage() {
           <div className={`text-xl font-bold ${theme.colors.text}`}>Ford Falcon</div>
           <div className="ml-auto flex items-center gap-3">
             <ThemeSelector currentTheme={currentTheme} onThemeChange={setCurrentTheme} />
+            <button
+              onClick={() => {
+                setIsGlobalNotifications(true);
+                setShowNotifications(true);
+              }}
+              className="relative p-2 rounded-xl hover:bg-slate-100 transition-colors"
+              title="Global Notifications"
+            >
+              <Bell className="h-5 w-5" />
+              {notifications.filter(n => !n.read).length > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {notifications.filter(n => !n.read).length}
+                </span>
+              )}
+            </button>
             <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
               Welcome Mayur!
             </span>
@@ -1408,7 +1509,57 @@ export default function ProjectDetailsPage() {
 
         {/* Timeline */}
         <div className="mb-8">
-          <h2 className={`text-2xl font-bold ${theme.colors.text} mb-6`}>Project Timeline</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className={`text-2xl font-bold ${theme.colors.text}`}>Project Timeline</h2>
+            <div className="flex items-center gap-4">
+              {/* Automation/Manual Toggle */}
+              <div className="flex items-center gap-2">
+                <span className={`text-sm ${theme.colors.textMuted}`}>Mode:</span>
+                <div className="flex bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setIsAutomationMode(true)}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
+                      isAutomationMode
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <AutoPlay className="h-4 w-4" />
+                    Automation
+                  </button>
+                  <button
+                    onClick={() => setIsAutomationMode(false)}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
+                      !isAutomationMode
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <Hand className="h-4 w-4" />
+                    Manual
+                  </button>
+                </div>
+              </div>
+              
+              {/* Notifications Button */}
+              <button
+                onClick={() => {
+                  setIsGlobalNotifications(false);
+                  setShowNotifications(true);
+                }}
+                className="relative px-3 py-2 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors flex items-center gap-2"
+                title="Project Notifications"
+              >
+                <Bell className="h-4 w-4" />
+                <span className="text-sm font-medium">Notifications</span>
+                {notifications.filter(n => !n.read && n.project === projectName).length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                    {notifications.filter(n => !n.read && n.project === projectName).length}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
           <div className="relative">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Object.entries(PROJECT_STAGES).map(([key, stage], index) => {
@@ -1432,7 +1583,19 @@ export default function ProjectDetailsPage() {
                             (theme.name === "Vibrant" ? 'border-gray-500/30 bg-gray-600/20 opacity-50' : 'border-gray-300/30 bg-gray-50 opacity-50') :
                             (theme.name === "Vibrant" ? 'border-gray-500/30 bg-gray-600/20' : 'border-gray-300/30 bg-gray-50')
                         } ${selectedStage === key ? 'ring-2 ring-blue-500/50 shadow-lg' : ''} ${status !== 'locked' ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                        onClick={() => status !== 'locked' && setSelectedStage(selectedStage === key ? null : key)}
+                        onClick={() => {
+                          if (status !== 'locked') {
+                            if (selectedStage === key) {
+                              setSelectedStage(null);
+                            } else {
+                              setSelectedStage(key);
+                              // Handle manual stage start
+                              if (!isAutomationMode && status === 'active' && enginesStarted) {
+                                handleManualStageStart(index + 1);
+                              }
+                            }
+                          }
+                        }}
                       >
                         {/* Step Number */}
                         <div className={`absolute -top-3 -left-3 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
@@ -1457,18 +1620,49 @@ export default function ProjectDetailsPage() {
                                 <Clock className="h-3 w-3" />
                                 {stage.duration}
                               </span>
-                                                          <span className={`px-2 py-1 rounded-full ${
-                              status === 'completed' ? 
-                                (theme.name === "Vibrant" ? 'bg-green-600/30 text-green-300' : 'bg-green-100 text-green-800') :
-                              status === 'active' ? 
-                                (theme.name === "Vibrant" ? 'bg-blue-600/30 text-blue-300' : 'bg-blue-100 text-blue-800') :
-                              status === 'locked' ?
-                                (theme.name === "Vibrant" ? 'bg-red-600/30 text-red-300' : 'bg-red-100 text-red-800') :
-                                (theme.name === "Vibrant" ? 'bg-gray-600/30 text-gray-300' : 'bg-gray-100 text-gray-800')
-                            }`}>
-                              {status === 'locked' ? 'locked' : status}
-                            </span>
+                              <span className={`px-2 py-1 rounded-full ${
+                                status === 'completed' ? 
+                                  (theme.name === "Vibrant" ? 'bg-green-600/30 text-green-300' : 'bg-green-100 text-green-800') :
+                                status === 'active' ? 
+                                  (theme.name === "Vibrant" ? 'bg-blue-600/30 text-blue-300' : 'bg-blue-100 text-blue-800') :
+                                status === 'locked' ?
+                                  (theme.name === "Vibrant" ? 'bg-red-600/30 text-red-300' : 'bg-red-100 text-red-800') :
+                                  (theme.name === "Vibrant" ? 'bg-gray-600/30 text-gray-300' : 'bg-gray-100 text-gray-800')
+                              }`}>
+                                {status === 'locked' ? 'locked' : status}
+                              </span>
                             </div>
+                            
+                            {/* Progress bar for active stage in automation mode */}
+                            {status === 'active' && isAutomationMode && currentStageProgress > 0 && (
+                              <div className="mt-3">
+                                <div className="flex items-center justify-between text-xs mb-1">
+                                  <span className={theme.colors.textMuted}>Progress</span>
+                                  <span className={theme.colors.textMuted}>{Math.round(currentStageProgress)}%</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div 
+                                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                    style={{ width: `${currentStageProgress}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Manual start button for manual mode */}
+                            {status === 'active' && !isAutomationMode && enginesStarted && (
+                              <div className="mt-3">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleManualStageStart(index + 1);
+                                  }}
+                                  className={`w-full px-3 py-2 rounded-lg text-sm font-medium ${theme.colors.accent} text-white ${theme.colors.accentHover} transition-colors`}
+                                >
+                                  Start Stage
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </motion.div>
@@ -1857,6 +2051,16 @@ export default function ProjectDetailsPage() {
             setShowSessionDetails(false);
             setSelectedSession(null);
           }}
+          theme={theme}
+        />
+      )}
+
+      {/* Notifications Overlay */}
+      {showNotifications && (
+        <NotificationsPage
+          projectName={projectName}
+          isGlobal={isGlobalNotifications}
+          onClose={() => setShowNotifications(false)}
           theme={theme}
         />
       )}

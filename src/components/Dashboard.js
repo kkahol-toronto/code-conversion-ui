@@ -4,9 +4,10 @@ import {
   Area, AreaChart, CartesianGrid, Legend, Radar, RadarChart, PolarGrid, PolarAngleAxis,
   ResponsiveContainer, Tooltip, XAxis, YAxis, BarChart, Bar, Cell
 } from "recharts";
-import { Search, Mic, Send, ChevronRight, Filter, Users, Palette, Sun, Eye } from "lucide-react";
+import { Search, Mic, Send, ChevronRight, Filter, Users, Palette, Sun, Eye, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProjectDetails from "./ProjectDetails";
+import NotificationsPage from "./NotificationsPage";
 
 // Import images from the assets folder
 import fordLogo from "../assets/ford-logo.png";
@@ -289,6 +290,7 @@ export default function Dashboard() {
   const [isChatExpanded, setIsChatExpanded] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isProjectDetailsOpen, setIsProjectDetailsOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const { transcript, setTranscript, start } = useSpeechRecognition(true);
 
   useEffect(() => {
@@ -348,6 +350,16 @@ export default function Dashboard() {
           <div className={`text-xl font-bold ${theme.colors.text}`}>Ford Falcon</div>
           <div className="ml-auto flex items-center gap-3">
             <ThemeSelector currentTheme={currentTheme} onThemeChange={setCurrentTheme} />
+            <button
+              onClick={() => setShowNotifications(true)}
+              className="relative p-2 rounded-xl hover:bg-slate-100 transition-colors"
+              title="Global Notifications"
+            >
+              <Bell className="h-5 w-5" />
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                3
+              </span>
+            </button>
             <button 
               className={`rounded-xl border ${theme.colors.border} px-3 py-1.5 text-sm hover:bg-slate-50 ${theme.colors.text}`}
               onClick={() => alert("Hook this to your Azure AD auth route.")}
@@ -686,6 +698,16 @@ export default function Dashboard() {
         }}
         theme={theme}
       />
+
+      {/* Notifications Overlay */}
+      {showNotifications && (
+        <NotificationsPage
+          projectName="Global"
+          isGlobal={true}
+          onClose={() => setShowNotifications(false)}
+          theme={theme}
+        />
+      )}
     </div>
   );
 }
