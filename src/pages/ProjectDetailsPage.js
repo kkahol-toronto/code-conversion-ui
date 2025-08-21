@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, FileText, Code, Users, Clock, CheckCircle, Play, Upload, Eye, Edit, Calendar, Palette, Sun, Eye as EyeIcon, Search, Mic, Send, ChevronRight, Zap } from 'lucide-react';
-import { Area, AreaChart, CartesianGrid, Legend, Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip, XAxis, YAxis, BarChart, Bar, Cell } from "recharts";
+import { Area, AreaChart, CartesianGrid, Legend, Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip, XAxis, YAxis, BarChart, Bar, Cell, LineChart, Line, ReferenceLine } from "recharts";
 import ConfirmationPage from '../components/ConfirmationPage';
 import SessionDetails from '../components/SessionDetails';
 
@@ -199,7 +199,25 @@ const PROJECT_DATA = {
       { metric: "Capability Docs", score: 4.4, target: 4.5 },
       { metric: "Application Docs", score: 4.6, target: 4.5 },
       { metric: "SME Approval", score: 4.8, target: 4.5 },
-    ]
+    ],
+    iterativeImprovement: {
+      documentGeneration: [
+        { iteration: 1, score: 2.5, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 2, score: 3.2, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 3, score: 3.8, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 4, score: 4.3, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 5, score: 4.6, threshold: 4.5, status: 'threshold_reached' },
+        { iteration: 6, score: 4.7, threshold: 4.5, status: 'converged' }
+      ],
+      codeConversion: [
+        { iteration: 1, score: 2.71, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 2, score: 3.16, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 3, score: 3.73, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 4, score: 4.1, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 5, score: 4.5, threshold: 4.5, status: 'threshold_reached' },
+        { iteration: 6, score: 4.8, threshold: 4.5, status: 'converged' }
+      ]
+    }
   },
   GEVIS: {
     weeklyLoC: [
@@ -222,7 +240,25 @@ const PROJECT_DATA = {
       { metric: "Capability Docs", score: 4.1, target: 4.5 },
       { metric: "Application Docs", score: 4.2, target: 4.5 },
       { metric: "SME Approval", score: 4.0, target: 4.5 },
-    ]
+    ],
+    iterativeImprovement: {
+      documentGeneration: [
+        { iteration: 1, score: 2.8, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 2, score: 3.4, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 3, score: 3.9, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 4, score: 4.2, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 5, score: 4.3, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 6, score: 4.5, threshold: 4.5, status: 'threshold_reached' }
+      ],
+      codeConversion: [
+        { iteration: 1, score: 2.6, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 2, score: 3.1, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 3, score: 3.7, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 4, score: 4.0, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 5, score: 4.3, threshold: 4.5, status: 'below_threshold' },
+        { iteration: 6, score: 4.6, threshold: 4.5, status: 'threshold_reached' }
+      ]
+    }
   }
 };
 
@@ -1008,6 +1044,128 @@ export default function ProjectDetailsPage() {
                         />
                       </RadarChart>
                     </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+
+              {/* Iterative AI Agent Improvement */}
+              <div className="mt-8">
+                <h3 className={`text-2xl font-bold ${theme.colors.text} mb-6`}>AI Agent Iterative Improvement</h3>
+                <div className="grid lg:grid-cols-2 gap-6">
+                  {/* Document Generation Improvement */}
+                  <div className={`${theme.colors.chart} rounded-2xl border ${theme.colors.border} p-4 shadow`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className={`font-semibold ${theme.colors.text}`}>Document Generation Quality</h4>
+                      <span className={`text-xs ${theme.colors.textMuted}`}>iterative improvement</span>
+                    </div>
+                    <div className="h-56">
+                      <ResponsiveContainer>
+                        <LineChart data={projectData.iterativeImprovement?.documentGeneration || []}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={theme.name === "Vibrant" ? "#ffffff40" : "#e5e7eb"} />
+                          <XAxis 
+                            dataKey="iteration" 
+                            tick={{ fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }}
+                            label={{ value: 'Iteration', position: 'insideBottom', offset: -5, fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }}
+                          />
+                          <YAxis 
+                            domain={[1, 5]}
+                            tick={{ fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }}
+                            label={{ value: 'Score', angle: -90, position: 'insideLeft', fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }}
+                          />
+                          <ReferenceLine 
+                            y={4.5} 
+                            stroke="#22c55e" 
+                            strokeDasharray="5 5" 
+                            label={{ value: "Threshold (4.5)", position: "topRight", fill: "#22c55e" }}
+                          />
+                          <Tooltip 
+                            contentStyle={{
+                              backgroundColor: theme.name === "Vibrant" ? "#1e3a8a" : "#ffffff",
+                              color: theme.name === "Vibrant" ? "#ffffff" : "#000000",
+                              border: theme.name === "Vibrant" ? "1px solid #3b82f6" : "1px solid #e5e7eb"
+                            }}
+                            formatter={(value, name) => [`${value}/5`, 'Quality Score']}
+                            labelFormatter={(label) => `Iteration ${label}`}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="score" 
+                            stroke="#3b82f6" 
+                            strokeWidth={3}
+                            dot={{ fill: "#3b82f6", strokeWidth: 2, r: 6 }}
+                            activeDot={{ r: 8, stroke: "#3b82f6", strokeWidth: 2, fill: "#ffffff" }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className={`text-xs ${theme.colors.textMuted} mt-2 flex items-center justify-between`}>
+                      <span>Agent stops at threshold (4.5) or manual intervention</span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        projectData.iterativeImprovement?.documentGeneration?.some(iter => iter.status === 'threshold_reached')
+                          ? (theme.name === "Vibrant" ? 'bg-green-600/30 text-green-300' : 'bg-green-100 text-green-800')
+                          : (theme.name === "Vibrant" ? 'bg-orange-600/30 text-orange-300' : 'bg-orange-100 text-orange-800')
+                      }`}>
+                        {projectData.iterativeImprovement?.documentGeneration?.some(iter => iter.status === 'threshold_reached') ? 'Threshold Reached' : 'In Progress'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Code Conversion Improvement */}
+                  <div className={`${theme.colors.chart} rounded-2xl border ${theme.colors.border} p-4 shadow`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className={`font-semibold ${theme.colors.text}`}>Code Conversion Quality</h4>
+                      <span className={`text-xs ${theme.colors.textMuted}`}>iterative refinement</span>
+                    </div>
+                    <div className="h-56">
+                      <ResponsiveContainer>
+                        <LineChart data={projectData.iterativeImprovement?.codeConversion || []}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={theme.name === "Vibrant" ? "#ffffff40" : "#e5e7eb"} />
+                          <XAxis 
+                            dataKey="iteration" 
+                            tick={{ fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }}
+                            label={{ value: 'Iteration', position: 'insideBottom', offset: -5, fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }}
+                          />
+                          <YAxis 
+                            domain={[1, 5]}
+                            tick={{ fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }}
+                            label={{ value: 'Score', angle: -90, position: 'insideLeft', fill: theme.name === "Vibrant" ? "#ffffff" : "#6b7280" }}
+                          />
+                          <ReferenceLine 
+                            y={4.5} 
+                            stroke="#22c55e" 
+                            strokeDasharray="5 5" 
+                            label={{ value: "Threshold (4.5)", position: "topRight", fill: "#22c55e" }}
+                          />
+                          <Tooltip 
+                            contentStyle={{
+                              backgroundColor: theme.name === "Vibrant" ? "#1e3a8a" : "#ffffff",
+                              color: theme.name === "Vibrant" ? "#ffffff" : "#000000",
+                              border: theme.name === "Vibrant" ? "1px solid #3b82f6" : "1px solid #e5e7eb"
+                            }}
+                            formatter={(value, name) => [`${value}/5`, 'Quality Score']}
+                            labelFormatter={(label) => `Iteration ${label}`}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="score" 
+                            stroke="#f59e0b" 
+                            strokeWidth={3}
+                            dot={{ fill: "#f59e0b", strokeWidth: 2, r: 6 }}
+                            activeDot={{ r: 8, stroke: "#f59e0b", strokeWidth: 2, fill: "#ffffff" }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className={`text-xs ${theme.colors.textMuted} mt-2 flex items-center justify-between`}>
+                      <span>Continuous refinement until quality target met</span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        projectData.iterativeImprovement?.codeConversion?.some(iter => iter.status === 'threshold_reached')
+                          ? (theme.name === "Vibrant" ? 'bg-green-600/30 text-green-300' : 'bg-green-100 text-green-800')
+                          : (theme.name === "Vibrant" ? 'bg-orange-600/30 text-orange-300' : 'bg-orange-100 text-orange-800')
+                      }`}>
+                        {projectData.iterativeImprovement?.codeConversion?.some(iter => iter.status === 'threshold_reached') ? 'Threshold Reached' : 'In Progress'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

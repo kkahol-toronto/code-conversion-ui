@@ -57,6 +57,26 @@ const generateSessionData = (session, projectName) => {
     { metric: "Integration", score: 92.1, target: 85.0 }
   ];
 
+  // Generate iterative improvement data for this session
+  const iterativeImprovement = {
+    documentGeneration: [
+      { iteration: 1, score: 2.3 + Math.random() * 0.5, threshold: 4.5, status: 'below_threshold' },
+      { iteration: 2, score: 2.9 + Math.random() * 0.4, threshold: 4.5, status: 'below_threshold' },
+      { iteration: 3, score: 3.5 + Math.random() * 0.4, threshold: 4.5, status: 'below_threshold' },
+      { iteration: 4, score: 4.0 + Math.random() * 0.3, threshold: 4.5, status: 'below_threshold' },
+      { iteration: 5, score: 4.4 + Math.random() * 0.2, threshold: 4.5, status: 'below_threshold' },
+      { iteration: 6, score: 4.5 + Math.random() * 0.3, threshold: 4.5, status: 'threshold_reached' }
+    ],
+    codeConversion: [
+      { iteration: 1, score: 2.1 + Math.random() * 0.6, threshold: 4.5, status: 'below_threshold' },
+      { iteration: 2, score: 2.8 + Math.random() * 0.5, threshold: 4.5, status: 'below_threshold' },
+      { iteration: 3, score: 3.4 + Math.random() * 0.4, threshold: 4.5, status: 'below_threshold' },
+      { iteration: 4, score: 3.9 + Math.random() * 0.3, threshold: 4.5, status: 'below_threshold' },
+      { iteration: 5, score: 4.3 + Math.random() * 0.3, threshold: 4.5, status: 'below_threshold' },
+      { iteration: 6, score: 4.6 + Math.random() * 0.2, threshold: 4.5, status: 'threshold_reached' }
+    ]
+  };
+
   // Generate artifacts data
   const artifacts = {
     inputDocuments: [
@@ -85,6 +105,7 @@ const generateSessionData = (session, projectName) => {
     stageData,
     qualityMetrics,
     artifacts,
+    iterativeImprovement,
     summary: {
       totalLocProcessed: hourlyProgress.reduce((sum, h) => sum + h.locProcessed, 0),
       averageAccuracy: hourlyProgress.reduce((sum, h) => sum + h.accuracy, 0) / hourlyProgress.length,
