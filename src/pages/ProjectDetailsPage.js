@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, FileText, Code, Users, Clock, CheckCircle, Play, Upload, Eye, Edit, Calendar, Palette, Sun, Eye as EyeIcon, Search, Mic, Send, ChevronRight, Zap } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, Legend, Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip, XAxis, YAxis, BarChart, Bar, Cell } from "recharts";
+import ConfirmationPage from '../components/ConfirmationPage';
 
 // Theme definitions
 const themes = {
@@ -488,6 +489,7 @@ export default function ProjectDetailsPage() {
   const [enginesStarted, setEnginesStarted] = useState(false);
   const [isEngineStarting, setIsEngineStarting] = useState(false);
   const [showEngineAnimation, setShowEngineAnimation] = useState(false);
+  const [showConfirmationPage, setShowConfirmationPage] = useState(false);
   const [currentStatusMessage, setCurrentStatusMessage] = useState("");
   const [sessionHistory, setSessionHistory] = useState(SAMPLE_SESSION_HISTORY[projectName] || []);
   const [currentSessionId, setCurrentSessionId] = useState(null);
@@ -635,6 +637,19 @@ export default function ProjectDetailsPage() {
     setShowAddDocumentForm(false);
   };
 
+  const handleConfirmationConfirm = () => {
+    setShowConfirmationPage(false);
+    setEnginesStarted(true);
+    // Update project stage to 2 (Comprehension Documentation)
+    project.progress = 2;
+  };
+
+  const handleConfirmationCancel = () => {
+    setShowConfirmationPage(false);
+    // Reset to stage 1 if user cancels
+    project.progress = 1;
+  };
+
   const statusMessages = [
     "Establishing link with Falcon Backend...",
     "Initializing AI processing cores...",
@@ -699,11 +714,10 @@ export default function ProjectDetailsPage() {
         clearInterval(audioRef.current.messageInterval);
       }
       setIsEngineStarting(false);
-      setEnginesStarted(true);
       setShowEngineAnimation(false);
       setCurrentStatusMessage("");
-      // Update project stage to 2 (Comprehension Documentation)
-      project.progress = 2;
+      // Show confirmation page instead of immediately starting engines
+      setShowConfirmationPage(true);
     });
     
     audio.addEventListener('error', (e) => {
@@ -716,11 +730,10 @@ export default function ProjectDetailsPage() {
       // Simulate audio duration for animation
       setTimeout(() => {
         setIsEngineStarting(false);
-        setEnginesStarted(true);
         setShowEngineAnimation(false);
         setCurrentStatusMessage("");
-        // Update project stage to 2 (Comprehension Documentation)
-        project.progress = 2;
+        // Show confirmation page instead of immediately starting engines
+        setShowConfirmationPage(true);
       }, 3000); // 3 second animation if no audio
     });
     
@@ -751,11 +764,10 @@ export default function ProjectDetailsPage() {
           // Simulate audio duration for animation
           setTimeout(() => {
             setIsEngineStarting(false);
-            setEnginesStarted(true);
             setShowEngineAnimation(false);
             setCurrentStatusMessage("");
-            // Update project stage to 2 (Comprehension Documentation)
-            project.progress = 2;
+            // Show confirmation page instead of immediately starting engines
+            setShowConfirmationPage(true);
           }, 3000); // 3 second animation if no audio
         });
     }
@@ -1659,6 +1671,17 @@ export default function ProjectDetailsPage() {
                       </motion.p>
           </motion.div>
         </div>
+      )}
+
+      {/* Confirmation Page Overlay */}
+      {showConfirmationPage && (
+        <ConfirmationPage
+          project={project}
+          inputDocuments={inputDocuments}
+          onConfirm={handleConfirmationConfirm}
+          onCancel={handleConfirmationCancel}
+          theme={theme}
+        />
       )}
     </div>
   );
