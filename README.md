@@ -76,6 +76,7 @@ UI/
 - Real-time KPI metrics (live projects, completed projects, LoC processing)
 - Interactive charts (weekly LoC, evaluation scores, stage distribution)
 - Searchable project table with filtering
+- Add new projects with form validation
 - Voice-enabled AI chat interface
 - Theme switching with 3 preset themes
 - Global notifications system

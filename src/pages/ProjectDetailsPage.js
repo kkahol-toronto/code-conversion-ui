@@ -531,7 +531,16 @@ export default function ProjectDetailsPage() {
     }
   };
 
-  const currentArtifacts = projectArtifacts[projectName] || projectArtifacts.MISC;
+  // Generate default artifacts for new projects
+  const getDefaultArtifacts = (projectName) => ({
+    inputDocuments: [],
+    comprehensionDocuments: [],
+    capabilityDocument: [],
+    applicationDocument: [],
+    codeConversionDocuments: []
+  });
+
+  const currentArtifacts = projectArtifacts[projectName] || getDefaultArtifacts(projectName);
 
   // Initialize input documents state
   const [inputDocuments, setInputDocuments] = useState(currentArtifacts.inputDocuments);
@@ -550,20 +559,37 @@ export default function ProjectDetailsPage() {
     };
   }, [stageTimer]);
 
-  // Find the project
-  const project = PROJECTS.find(p => p.name === projectName);
+  // Find the project from localStorage or fallback to static PROJECTS
+  const getProjects = () => {
+    const savedProjects = localStorage.getItem('ford-falcon-projects');
+    return savedProjects ? JSON.parse(savedProjects) : PROJECTS;
+  };
+  
+  const project = getProjects().find(p => p.name === projectName);
   
   if (!project) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-indigo-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Project Not Found</h1>
-          <button 
-            onClick={() => navigate('/')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Back to Dashboard
-          </button>
+      <div className={`min-h-screen bg-gradient-to-br ${theme.colors.primary} flex items-center justify-center`}>
+        <div className={`text-center ${theme.colors.chart} rounded-2xl border ${theme.colors.border} p-8 shadow-lg max-w-md`}>
+          <div className="text-6xl mb-4">🔍</div>
+          <h1 className={`text-2xl font-bold ${theme.colors.text} mb-2`}>Project Not Found</h1>
+          <p className={`${theme.colors.textMuted} mb-6`}>
+            The project "{projectName}" could not be found. It may have been deleted or the URL is incorrect.
+          </p>
+          <div className="space-y-3">
+            <button 
+              onClick={() => navigate('/')}
+              className={`w-full px-4 py-2 ${theme.colors.accent} text-white rounded-lg hover:${theme.colors.accentHover} transition-colors`}
+            >
+              Back to Dashboard
+            </button>
+            <button 
+              onClick={() => navigate('/')}
+              className={`w-full px-4 py-2 border ${theme.colors.border} ${theme.colors.text} rounded-lg hover:bg-slate-50 transition-colors`}
+            >
+              View All Projects
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -572,6 +598,15 @@ export default function ProjectDetailsPage() {
   const currentStage = PROJECT_STAGES[Object.keys(PROJECT_STAGES)[project.progress - 1]];
   const completedStages = project.progress - 1;
   const totalStages = Object.keys(PROJECT_STAGES).length;
+  
+  // Update project progress in localStorage when it changes
+  const updateProjectProgress = (newProgress) => {
+    const projects = getProjects();
+    const updatedProjects = projects.map(p => 
+      p.name === projectName ? { ...p, progress: newProgress } : p
+    );
+    localStorage.setItem('ford-falcon-projects', JSON.stringify(updatedProjects));
+  };
 
   const getStageStatus = (stageIndex) => {
     // Stage 1 (Data Ingestion) is always accessible
@@ -609,12 +644,13 @@ export default function ProjectDetailsPage() {
     addNotification('success', `Stage ${stageIndex} Completed`, `${stageName} stage completed successfully.`);
     
     if (stageIndex < Object.keys(PROJECT_STAGES).length) {
-      project.progress = stageIndex + 1;
-      addNotification('info', `Stage ${stageIndex + 1} Started`, `${PROJECT_STAGES[Object.keys(PROJECT_STAGES)[stageIndex]].name} stage has begun.`);
+      const newProgress = stageIndex + 1;
+      updateProjectProgress(newProgress);
+      addNotification('info', `Stage ${newProgress} Started`, `${PROJECT_STAGES[Object.keys(PROJECT_STAGES)[stageIndex]].name} stage has begun.`);
       
       if (isAutomationMode) {
         // Start automation timer for next stage
-        startStageTimer(stageIndex + 1);
+        startStageTimer(newProgress);
       }
     }
   };
@@ -944,6 +980,26 @@ export default function ProjectDetailsPage() {
             </div>
           </div>
         </div>
+
+        {/* Welcome Message for New Projects */}
+        {project.progress === 1 && sessionHistory.length === 0 && (
+          <div className="mb-8">
+            <div className={`${theme.colors.card} rounded-2xl border ${theme.colors.border} p-6 shadow-sm`}>
+              <div className="text-center">
+                <div className="text-4xl mb-4">🚀</div>
+                <h3 className={`text-xl font-bold ${theme.colors.text} mb-2`}>Welcome to {project.name}!</h3>
+                <p className={`${theme.colors.textSecondary} mb-4`}>
+                  Your project has been successfully created and is ready to begin the legacy code conversion process. 
+                  You're currently at Stage 1: Data Ingestion, where you'll upload your source code and documentation.
+                </p>
+                <div className={`inline-flex items-center gap-2 px-4 py-2 ${theme.name === "Vibrant" ? "bg-blue-600/20" : "bg-blue-50"} rounded-lg`}>
+                  <span className="text-sm font-medium">Next Step:</span>
+                  <span className={`text-sm ${theme.colors.textMuted}`}>Upload your source code and documentation to begin</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tab Navigation */}
         <div className="mb-6">

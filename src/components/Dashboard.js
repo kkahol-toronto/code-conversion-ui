@@ -4,7 +4,7 @@ import {
   Area, AreaChart, CartesianGrid, Legend, Radar, RadarChart, PolarGrid, PolarAngleAxis,
   ResponsiveContainer, Tooltip, XAxis, YAxis, BarChart, Bar, Cell
 } from "recharts";
-import { Search, Mic, Send, ChevronRight, Filter, Users, Palette, Sun, Eye, Bell } from "lucide-react";
+import { Search, Mic, Send, ChevronRight, Filter, Users, Palette, Sun, Eye, Bell, Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProjectDetails from "./ProjectDetails";
 import NotificationsPage from "./NotificationsPage";
@@ -76,7 +76,7 @@ const PIPELINE = [
   "Project Completed",
 ];
 
-const PROJECTS = [
+const INITIAL_PROJECTS = [
   { name: "MISC", owner: "Ford Credit", progress: 8, risk: "low" },
   { name: "GEVIS", owner: "Ford NA", progress: 4, risk: "medium" },
   { name: "GEMSL", owner: "Global Parts", progress: 6, risk: "low" },
@@ -99,11 +99,7 @@ const PROJECTS = [
   { name: "ReportingSuite", owner: "Business Intelligence", progress: 4, risk: "low" },
 ];
 
-// Varied distribution for stage chart (counts by exact stage)
-const stageBuckets = PIPELINE.map((stage, idx) => ({
-  stage,
-  count: PROJECTS.filter(p => p.progress === idx + 1).length,
-}));
+
 
 const riskDescriptions = {
   low: "Minimal risk with well-defined requirements and stable technology stack",
@@ -221,6 +217,24 @@ export default function Dashboard() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [isProjectDetailsOpen, setIsProjectDetailsOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showAddProject, setShowAddProject] = useState(false);
+  const [newProject, setNewProject] = useState({
+    name: "",
+    description: "",
+    owner: "",
+    risk: "low"
+  });
+  const [projects, setProjects] = useState(() => {
+    // Load projects from localStorage or use initial projects
+    const savedProjects = localStorage.getItem('ford-falcon-projects');
+    return savedProjects ? JSON.parse(savedProjects) : INITIAL_PROJECTS;
+  });
+  
+  // Save projects to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('ford-falcon-projects', JSON.stringify(projects));
+  }, [projects]);
+  
   const { transcript, setTranscript, start } = useSpeechRecognition(true);
 
   useEffect(() => {
@@ -228,17 +242,17 @@ export default function Dashboard() {
   }, [transcript]);
 
   const filtered = useMemo(
-    () => PROJECTS.filter(p => 
+    () => projects.filter(p => 
       p.name.toLowerCase().includes(q.toLowerCase()) || 
       p.owner.toLowerCase().includes(q.toLowerCase())
     ),
-    [q]
+    [q, projects]
   );
 
   const handleAsk = () => {
     if (!q.trim()) return;
     
-    const found = PROJECTS.find(p => p.name.toLowerCase() === q.toLowerCase());
+    const found = projects.find(p => p.name.toLowerCase() === q.toLowerCase());
     const reply = found 
       ? `${found.name} is at stage "${PIPELINE[found.progress - 1]}" with risk ${found.risk}.`
       : `I found ${filtered.length} matching projects. Try a full name (e.g., "MISC").`;
@@ -258,6 +272,12 @@ export default function Dashboard() {
   const weeklyWithCum = kpis.weeklyLoC.map((d, i) => ({
     ...d,
     cumulative: kpis.weeklyLoC.slice(0, i + 1).reduce((s, r) => s + r.loc, 0)
+  }));
+
+  // Varied distribution for stage chart (counts by exact stage)
+  const stageBuckets = PIPELINE.map((stage, idx) => ({
+    stage,
+    count: projects.filter(p => p.progress === idx + 1).length,
   }));
 
   // Image fallbacks (for canvas preview)
@@ -456,6 +476,12 @@ export default function Dashboard() {
           }`}>
             <Filter className="h-4 w-4"/>Filters
           </button>
+          <button 
+            onClick={() => setShowAddProject(true)}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl ${theme.colors.accent} text-white hover:${theme.colors.accentHover} transition-colors`}
+          >
+            <Plus className="h-4 w-4"/>Add Project
+          </button>
         </div>
 
         {/* Projects Table */}
@@ -463,7 +489,7 @@ export default function Dashboard() {
           <div className={`px-4 py-3 border-b ${theme.name === "Vibrant" ? "border-white/20" : "border-slate-100"} flex items-center gap-2`}>
             <Users className={`h-4 w-4 ${theme.colors.textMuted}`}/>
             <div className={`font-semibold ${theme.colors.text}`}>Projects</div>
-            <div className={`ml-auto text-xs ${theme.colors.textMuted}`}>Showing {filtered.length} of {PROJECTS.length}</div>
+            <div className={`ml-auto text-xs ${theme.colors.textMuted}`}>Showing {filtered.length} of {projects.length}</div>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
@@ -617,6 +643,156 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Add Project Modal */}
+      {showAddProject && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className={`${theme.colors.chart} rounded-2xl shadow-xl border ${theme.colors.border} w-full max-w-md overflow-hidden`}
+          >
+            {/* Modal Header */}
+            <div className={`px-6 py-4 border-b ${theme.name === "Vibrant" ? "border-white/20" : "border-slate-100"} flex items-center justify-between`}>
+              <h2 className={`text-lg font-semibold ${theme.colors.text}`}>Add New Project</h2>
+              <button
+                onClick={() => setShowAddProject(false)}
+                className={`p-1 rounded-lg hover:bg-white/10 ${theme.colors.textMuted}`}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4">
+              <div>
+                <label className={`block text-sm font-medium ${theme.colors.text} mb-2`}>
+                  Project Name *
+                </label>
+                <input
+                  type="text"
+                  value={newProject.name}
+                  onChange={(e) => setNewProject({...newProject, name: e.target.value})}
+                  placeholder="Enter project name"
+                  className={`w-full px-3 py-2 rounded-lg border ${theme.colors.border} focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    theme.name === "Vibrant" 
+                      ? "bg-white/10 text-white placeholder-white/60" 
+                      : "bg-white text-slate-900 placeholder-slate-500"
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${theme.colors.text} mb-2`}>
+                  Project Description
+                </label>
+                <textarea
+                  value={newProject.description}
+                  onChange={(e) => setNewProject({...newProject, description: e.target.value})}
+                  placeholder="Enter project description"
+                  rows={3}
+                  className={`w-full px-3 py-2 rounded-lg border ${theme.colors.border} focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    theme.name === "Vibrant" 
+                      ? "bg-white/10 text-white placeholder-white/60" 
+                      : "bg-white text-slate-900 placeholder-slate-500"
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${theme.colors.text} mb-2`}>
+                  Project Owner *
+                </label>
+                <input
+                  type="text"
+                  value={newProject.owner}
+                  onChange={(e) => setNewProject({...newProject, owner: e.target.value})}
+                  placeholder="Enter project owner"
+                  className={`w-full px-3 py-2 rounded-lg border ${theme.colors.border} focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    theme.name === "Vibrant" 
+                      ? "bg-white/10 text-white placeholder-white/60" 
+                      : "bg-white text-slate-900 placeholder-slate-500"
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${theme.colors.text} mb-2`}>
+                  Initial Risk Level
+                </label>
+                <select
+                  value={newProject.risk}
+                  onChange={(e) => setNewProject({...newProject, risk: e.target.value})}
+                  className={`w-full px-3 py-2 rounded-lg border ${theme.colors.border} focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    theme.name === "Vibrant" 
+                      ? "bg-white/10 text-white" 
+                      : "bg-white text-slate-900"
+                  }`}
+                >
+                  <option value="low">Low Risk</option>
+                  <option value="medium">Medium Risk</option>
+                  <option value="high">High Risk</option>
+                </select>
+              </div>
+
+              <div className={`p-3 rounded-lg ${theme.name === "Vibrant" ? "bg-white/10" : "bg-blue-50"} border ${theme.name === "Vibrant" ? "border-white/20" : "border-blue-200"}`}>
+                <p className={`text-sm ${theme.name === "Vibrant" ? "text-white/80" : "text-blue-700"}`}>
+                  <strong>Note:</strong> New projects will start at Stage 1 (Data Ingestion) in the pipeline.
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className={`px-6 py-4 border-t ${theme.name === "Vibrant" ? "border-white/20" : "border-slate-100"} flex items-center justify-end gap-3`}>
+              <button
+                onClick={() => setShowAddProject(false)}
+                className={`px-4 py-2 rounded-lg border ${theme.colors.border} ${
+                  theme.name === "Vibrant" 
+                    ? "text-white hover:bg-white/10" 
+                    : "text-slate-700 hover:bg-slate-50"
+                } transition-colors`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (newProject.name.trim() && newProject.owner.trim()) {
+                    // Add the new project to the projects array
+                    const projectToAdd = {
+                      name: newProject.name.trim(),
+                      owner: newProject.owner.trim(),
+                      progress: 1, // Always start at stage 1
+                      risk: newProject.risk,
+                      description: newProject.description.trim()
+                    };
+                    
+                    // In a real app, this would be an API call
+                    setProjects(prevProjects => [...prevProjects, projectToAdd]);
+                    
+                    // Reset form and close modal
+                    setNewProject({
+                      name: "",
+                      description: "",
+                      owner: "",
+                      risk: "low"
+                    });
+                    setShowAddProject(false);
+                    
+                    // Show success message
+                    alert(`Project "${projectToAdd.name}" has been added successfully!`);
+                  } else {
+                    alert("Please fill in the required fields (Project Name and Owner).");
+                  }
+                }}
+                className={`px-4 py-2 rounded-lg ${theme.colors.accent} text-white hover:${theme.colors.accentHover} transition-colors`}
+              >
+                Add Project
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Project Details Modal */}
       <ProjectDetails

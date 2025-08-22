@@ -185,6 +185,38 @@ Authorization: Bearer <jwt_token>
 }
 ```
 
+### 1.4 Create New Project
+**Endpoint:** `POST /projects`
+
+**Request Body:**
+```json
+{
+  "name": "NewProject",
+  "description": "Description of the new project",
+  "owner": "Ford IT",
+  "risk": "low"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "newproject-001",
+    "name": "NewProject",
+    "description": "Description of the new project",
+    "owner": "Ford IT",
+    "progress": 1,
+    "risk": "low",
+    "currentStage": "Data Ingestion",
+    "createdAt": "2024-01-21T10:00:00Z",
+    "updatedAt": "2024-01-21T10:00:00Z",
+    "status": "active"
+  }
+}
+```
+
 ---
 
 ## 2. Session Management APIs
