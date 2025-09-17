@@ -585,9 +585,271 @@ Authorization: Bearer <jwt_token>
 
 ---
 
-## 5. AI Engine Management APIs
+## 5. TTD Generation APIs
 
-### 5.1 Start AI Engine
+### 5.1 Initialize TTD Generation
+**Endpoint:** `POST /projects/{projectId}/ttd/initialize`
+
+**Request Body:**
+```json
+{
+  "projectName": "MISC",
+  "initiatedBy": "user_001",
+  "version": "v1.0"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "ttdId": "ttd_001",
+    "projectId": "misc-001",
+    "status": "initialized",
+    "currentStage": "initial_questions",
+    "createdAt": "2024-01-21T10:00:00Z",
+    "version": "v1.0"
+  }
+}
+```
+
+### 5.2 Save TTD Stage Data
+**Endpoint:** `PUT /ttd/{ttdId}/stages/{stageId}`
+
+**Request Body:**
+```json
+{
+  "stageId": "initial_questions",
+  "formData": {
+    "project_overview": "Legacy COBOL system for financial processing...",
+    "business_context": "Handles customer account management...",
+    "user_roles": "Bank tellers, customer service representatives...",
+    "integration_points": "Core banking system, payment gateway...",
+    "performance_requirements": "Must handle 1000+ concurrent users..."
+  },
+  "completedAt": "2024-01-21T10:30:00Z"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "stageId": "initial_questions",
+    "status": "completed",
+    "nextStage": "capability_design",
+    "progress": 12.5
+  }
+}
+```
+
+### 5.3 Get TTD Progress
+**Endpoint:** `GET /ttd/{ttdId}/progress`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "ttdId": "ttd_001",
+    "projectId": "misc-001",
+    "currentStage": "capability_design",
+    "progress": 25,
+    "completedStages": ["initial_questions"],
+    "stages": [
+      {
+        "id": "initial_questions",
+        "name": "Initial Questions",
+        "status": "completed",
+        "completedAt": "2024-01-21T10:30:00Z"
+      },
+      {
+        "id": "capability_design",
+        "name": "Capability Design Stage",
+        "status": "in_progress",
+        "startedAt": "2024-01-21T10:30:00Z"
+      }
+    ]
+  }
+}
+```
+
+### 5.4 Generate Final TTD Document
+**Endpoint:** `POST /ttd/{ttdId}/generate`
+
+**Request Body:**
+```json
+{
+  "format": "pdf",
+  "includeDiagrams": true,
+  "template": "standard"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "ttdId": "ttd_001",
+    "documentId": "doc_ttd_001",
+    "status": "generated",
+    "downloadUrl": "/documents/doc_ttd_001/download",
+    "generatedAt": "2024-01-21T12:00:00Z",
+    "fileSize": 2048576,
+    "sections": 8
+  }
+}
+```
+
+### 5.5 Get TTD Document
+**Endpoint:** `GET /ttd/{ttdId}/document`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "ttdId": "ttd_001",
+    "projectId": "misc-001",
+    "document": {
+      "id": "doc_ttd_001",
+      "name": "TTD_MISC_v1.0.pdf",
+      "sections": [
+        {
+          "id": "initial_questions",
+          "title": "Initial Questions",
+          "content": "...",
+          "completed": true
+        },
+        {
+          "id": "capability_design",
+          "title": "Capability Design Stage",
+          "content": "...",
+          "completed": true
+        }
+      ],
+      "metadata": {
+        "totalPages": 45,
+        "wordCount": 12500,
+        "generatedAt": "2024-01-21T12:00:00Z"
+      }
+    }
+  }
+}
+```
+
+### 5.6 Get Available SMEs
+**Endpoint:** `GET /sme/available`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "rajan",
+      "name": "Rajan Patel",
+      "role": "Senior Technical Architect",
+      "email": "rajan.patel@ford.com",
+      "specializations": ["System Architecture", "Legacy Systems", "Integration"],
+      "availability": "available"
+    },
+    {
+      "id": "vardhini",
+      "name": "Vardhini Sharma",
+      "role": "Business Analyst",
+      "email": "vardhini.sharma@ford.com",
+      "specializations": ["Business Analysis", "Requirements", "Process Mapping"],
+      "availability": "available"
+    }
+  ]
+}
+```
+
+### 5.7 Send Questions to SMEs
+**Endpoint:** `POST /ttd/{ttdId}/sme/questions`
+
+**Request Body:**
+```json
+{
+  "stageId": "initial_questions",
+  "smeIds": ["rajan", "vardhini"],
+  "questions": "Can you provide more details about the system architecture and integration points?",
+  "priority": "medium",
+  "requestedBy": "user_001"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "requestId": "req_001",
+    "stageId": "initial_questions",
+    "smeIds": ["rajan", "vardhini"],
+    "questions": "Can you provide more details about the system architecture and integration points?",
+    "status": "sent",
+    "sentAt": "2024-01-21T10:30:00Z",
+    "expectedResponseTime": "2024-01-22T10:30:00Z"
+  }
+}
+```
+
+### 5.8 Get SME Responses
+**Endpoint:** `GET /ttd/{ttdId}/sme/responses`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "requestId": "req_001",
+      "smeId": "rajan",
+      "smeName": "Rajan Patel",
+      "questions": "Can you provide more details about the system architecture?",
+      "response": "The system uses a three-tier architecture with...",
+      "respondedAt": "2024-01-21T14:30:00Z",
+      "attachments": ["architecture_diagram.pdf"]
+    }
+  ]
+}
+```
+
+### 5.9 Get Pre-filled TTD Data
+**Endpoint:** `GET /ttd/{ttdId}/prefilled-data`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "projectOverview": "The MISC system is a legacy COBOL application...",
+    "businessContext": "The system supports several key business processes...",
+    "userRoles": "Primary users include Ford Credit customer service representatives...",
+    "integrationPoints": "The system integrates with external credit bureau services...",
+    "performanceRequirements": "The system must handle 10,000+ concurrent users...",
+    "sourceDocuments": [
+      {
+        "id": "doc_001",
+        "name": "System Architecture Document",
+        "type": "architecture",
+        "extractedContent": "..."
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 6. AI Engine Management APIs
+
+### 6.1 Start AI Engine
 **Endpoint:** `POST /projects/{projectId}/engine/start`
 
 **Request Body:**

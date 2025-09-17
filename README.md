@@ -13,6 +13,7 @@ An AI-driven legacy code conversion tracking portal for Ford's internal projects
 - **Responsive Design**: Modern UI optimized for all devices and screen sizes
 - **Session Management**: Track and manage project conversion sessions
 - **Document Management**: Comprehensive document upload, analysis, and chat capabilities
+- **TTD Generation**: Multi-stage Technical Transfer Document creation workflow
 - **Automation Engine**: AI-driven code conversion with iterative improvement cycles
 - **Notification System**: Real-time notifications for project updates and milestones
 
@@ -113,6 +114,22 @@ UI/
 - Voice input support
 - Message history persistence
 - Loading states and error handling
+
+#### TTDGeneration.js (New Component)
+**Multi-stage Technical Transfer Document generation workflow**
+
+**Key Functions:**
+- `handleInputChange()` - Form data management and validation
+- `isStageComplete()` - Stage completion validation
+- `handleGenerateTTD()` - Final document generation process
+
+**Features:**
+- 8-stage comprehensive TTD workflow
+- Dynamic form validation
+- Progress tracking and stage navigation
+- Real-time form data persistence
+- PDF document generation
+- Multi-theme support
 
 #### SessionDetails.js (569 lines)
 **Session history and artifact management**

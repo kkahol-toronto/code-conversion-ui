@@ -8,35 +8,12 @@ import { Search, Mic, Send, ChevronRight, Filter, Users, Palette, Sun, Eye, Bell
 import { useNavigate } from "react-router-dom";
 import ProjectDetails from "./ProjectDetails";
 import NotificationsPage from "./NotificationsPage";
+import ThemeSelector from "./ThemeSelector";
 import { useTheme } from "../context/ThemeContext";
 
 // Import images from the assets folder
 import fordLogo from "../assets/ford-logo.png";
 import heroImage from "../assets/front_image.png";
-
-// Theme selector component
-function ThemeSelector({ currentTheme, onThemeChange }) {
-  const { themes } = useTheme();
-  
-  return (
-    <div className="flex items-center gap-2">
-      {Object.entries(themes).map(([key, themeConfig]) => (
-        <button
-          key={key}
-          onClick={() => onThemeChange(key)}
-          className={`p-2 rounded-xl transition-all duration-200 ${
-            currentTheme === key
-              ? "bg-blue-100 text-blue-700 border-2 border-blue-300"
-              : "hover:bg-slate-100 text-slate-600"
-          }`}
-          title={themeConfig.name}
-        >
-          <span className="text-lg">{themeConfig.icon}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
 
 // ---------------------------- Mock Data -----------------------------
 const kpis = {

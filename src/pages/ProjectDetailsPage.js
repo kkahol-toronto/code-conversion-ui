@@ -1,37 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, FileText, Code, Users, Clock, CheckCircle, Play, Upload, Eye, Edit, Palette, Sun, Eye as EyeIcon, Mic, Send, ChevronRight, Zap, Bell, Play as AutoPlay, Hand } from 'lucide-react';
+import { ArrowLeft, FileText, Code, Users, Clock, CheckCircle, Play, Upload, Eye, Edit, Palette, Sun, Eye as EyeIcon, Mic, Send, ChevronRight, Zap, Bell, Play as AutoPlay, User } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, Legend, Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip, XAxis, YAxis, LineChart, Line, ReferenceLine } from "recharts";
 import ConfirmationPage from '../components/ConfirmationPage';
 import SessionDetails from '../components/SessionDetails';
 import NotificationsPage from '../components/NotificationsPage';
 import DocumentChat from '../components/DocumentChat';
+import ThemeSelector from '../components/ThemeSelector';
 import { useTheme } from '../context/ThemeContext';
-
-// Theme selector component
-function ThemeSelector({ currentTheme, onThemeChange }) {
-  const { themes } = useTheme();
-  
-  return (
-    <div className="flex items-center gap-2">
-      {Object.entries(themes).map(([key, themeConfig]) => (
-        <button
-          key={key}
-          onClick={() => onThemeChange(key)}
-          className={`p-2 rounded-xl transition-all duration-200 ${
-            currentTheme === key
-              ? "bg-blue-100 text-blue-700 border-2 border-blue-300"
-              : "hover:bg-slate-100 text-slate-600"
-          }`}
-          title={themeConfig.name}
-        >
-          <span className="text-lg">{themeConfig.icon}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
 
 // Mock data - in real app this would come from API
 const PROJECTS = [
@@ -352,7 +329,7 @@ const PROJECT_STAGES = {
     duration: "1 week",
     icon: <Code className="h-6 w-6" />,
     color: "from-teal-500 to-teal-600",
-    status: "pending",
+    status: "active",
     deliverables: [
       "Unit test frameworks",
       "Integration test suites",
@@ -614,6 +591,13 @@ export default function ProjectDetailsPage() {
       if (stageIndex < project.progress) return 'completed';
       if (stageIndex === project.progress) return 'active';
       return 'pending';
+    }
+    
+    // TTD Generation (stage 7) is always accessible for testing
+    if (stageIndex === 7) {
+      if (stageIndex < project.progress) return 'completed';
+      if (stageIndex === project.progress) return 'active';
+      return 'active'; // Always allow TTD Generation to be accessible
     }
     
     // Stages 2+ require engines to be started
@@ -1556,7 +1540,7 @@ export default function ProjectDetailsPage() {
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
-                    <Hand className="h-4 w-4" />
+                    <User className="h-4 w-4" />
                     Manual
                   </button>
                 </div>
@@ -1605,6 +1589,13 @@ export default function ProjectDetailsPage() {
                         } ${selectedStage === key ? 'ring-2 ring-blue-500/50 shadow-lg' : ''} ${status !== 'locked' ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                         onClick={() => {
                           if (status !== 'locked') {
+                            // Special handling for TTD Generation stage
+                            if (key === 'ttd_generation') {
+                              // Open TTD Generation in new tab
+                              window.open(`/ttd/${project.name}`, '_blank');
+                              return;
+                            }
+                            
                             if (selectedStage === key) {
                               setSelectedStage(null);
                             } else {
